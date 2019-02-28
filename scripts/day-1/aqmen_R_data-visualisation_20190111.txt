@@ -1,0 +1,1263 @@
+# Data Visualisation in R #
+# Derived from Fogarty (2018) and Healy (2019)
+
+# Data Visualisation is a key skill in social science data analysis, playing a vital role in theory development, 
+# measurement, data exploration, and interpretation and communication of results. 
+# It is an equally powerful and convincing approach to data analysis in industry.
+
+# The aim of a visualisation is to present a great deal of often complicated/complex information in as clear, concise and
+# intelligible way as possible; by and large, the consumer of a graph should not need to know the underlying logic and details
+# of the analysis in order to understand the message conveyed by the visualisation.
+
+#############
+
+# ADD IN PRELIMINARIES FROM AQMEN DO FILES
+
+##############
+
+
+#### TASKS (DMD) #####
+
+# Number the sections, starting from 0.
+# Set up course directories for files.
+# Match sections to course programme.
+# Learn how to save R scripts.
+# Add some material from data wrangling and predictive analytics workshops e.g. summary stats
+# Add some material on RMarkdown for the final day!!
+
+###########################
+
+# Install and load in necessary packages
+
+# A package only needs to be installed once, but you will need to load it in every time you launch an R session.
+my_packages <- c("tidyverse", "broom", "coefplot", "cowplot",
+                 "gapminder", "GGally", "ggrepel", "ggridges", "gridExtra",
+                 "here", "interplot", "margins", "maps", "mapproj",
+                 "mapdata", "MASS", "quantreg", "rlang", "scales",
+                 "survey", "srvyr", "viridis", "viridisLite", "devtools") # create a list of desired packages
+
+install.packages(my_packages, repos = "http://cran.rstudio.com") # install packages from the CRAN repository
+
+devtools::install_github("kjhealy/socviz") # install socviz package from Github (an alternative to CRAN for storing packages)
+
+library(ggplot2)
+?ggplot2
+# ggplot2 works by combining "layers" to create a visualisation i.e. data + variables/axes + graph/plot type + labelling etc
+# It is an implementation of an approach known as the "grammar of graphics" (Wilkinson, 2005):
+
+# "The grammar is a set of rules for producing graphics from data, taking pieces of data 
+# and mapping them to geometric objects (like points and lines) that have aesthetic 
+# attributes (like position, color and size), together with further rules for transforming 
+# the data if needed (e.g. to a smoothed line), adjusting scales (e.g. to a log scale)
+# and projecting the results onto a different coordinate system (usually cartesian)."
+# (Healy, 2019)
+
+# Note that we could use R's default plotting options (e.g. boxplot() etc) but we feel it is
+# best to get into the habit of using the more flexible, varied and powerful options provided
+# by ggplot2.
+
+# Further reasons to like ggplot? The default display options are well-chosen and there are a multitude of options for refining plots;
+# these features incorporate general rules for good visualisation as well as cognitive preferences for information presentation 
+# i.e. accounts for how we perceive colour, shapes, text, length etc.
+
+# 1. Import data #
+
+library(readr)
+
+auto <- read_csv("C:/Users/mcdonndz-local/Desktop/github/aqmen_wp3/data/auto.csv") # the famous sysuse data set from Stata
+str(auto)
+auto
+
+# 2. Some simple graphs #
+
+# DMD TASK: ADD PLOTS FOR EACH COMBINATION OF VARIABLE TYPES E.G. CONTINUOUS BY CATEGORICAL (BOXPLOT), CAT BY CAT ETC
+
+# A simple box graph
+
+str(auto$price)
+sum(is.na(auto$price)) # no missing values
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_boxplot(mapping = aes(x = "", y = auto$price)) # single boxplot (no x axis)
+ggplot(data = auto) + geom_boxplot(mapping = aes(x = auto$foreign, y = auto$price)) # two boxplots
+
+
+# A simple pie chart
+
+# Pie charts are tricky to produce in R and with ggplot2, and thus are not recommended
+# when a bar chart would suffice.
+
+
+# A simple bar chart
+
+class(auto$foreign) # stored as character data type - we want this to be a factor (categorical) variable
+auto$foreign <- as.factor(auto$foreign) # coerce the foreign variable to be factor data type
+levels(auto$foreign)
+factor(auto$foreign) # that's more like it
+unclass(auto$foreign) # Domestic = 1; Foreign = 2
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_bar(mapping = aes(auto$foreign)) 
+
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$foreign)) # add colour to the bars based on categories of foreign
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78)) # add colour to the bars based on categories of rep78; the result is a stacked bar chart
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "fill") # stacked bars of same height
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "dodge") # place bars side-by-side
+
+
+# A simple histogram
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg)) # narrows bins result in gaps
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4)
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4, fill = "red") # add colour to the graph
+
+# Histogram diassgregated by a second variable:
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4)
+# Note how we moved the fill option inside the aes() function.
+
+# Density plot
+ggplot(data = auto) + geom_density(mapping = aes(auto$mpg, fill = auto$foreign))
+
+
+# A simple dot chart
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_dotplot(mapping = aes(x = auto$price))
+
+
+# A simple count plot
+
+ggplot(data = diamonds) +
+  geom_count(mapping = aes(x = cut, y = color)) # a count plot is a good way of visualing the relationship between two categorical variables
+# QUESTION: what are the most common combinations of diamond colour and quality?
+
+
+# A simple scatterplot
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg))
+# QUESTION: what is the association between miles per gallon and the price of a car?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, color = foreign))
+# QUESTION: what is the effect of specifying the color option in the aes() function?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, size = foreign))
+# QUESTION: is a categorical variable a good choice for mapping to the size aesthetic?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, alpha = foreign))
+
+ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = foreign))
+ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = foreign, color = foreign))
+# Note how we can combine different shapes and colours in a single plot.
+
+# We've introduced a number of different aesthetic options in the above graphs:
+#	- color
+#	- shape
+# 	- size
+#	- alpha
+
+# Keep these in mind as we progress, we'll also introduce other options that alter the display of the plots.
+
+
+# 3. ggplot() basics #
+
+# data > mapping > geom > co-ordinates and scales > labels
+# The above represents the basic syntax of a ggplot graph; let's look at an example to understand what is happening at each
+# step and the final result:
+
+library(gapminder) # load in gapminder data - see https://www.gapminder.org/
+gapminder
+
+# Create the base object for producing our graph (i.e. the data and mapping components):
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+# We pass some data to the ggplot() function, followed by mapping the variables in the data to the aesthetic of the plot
+# i.e. how it is going to look.
+
+# Next we specify what type of plot we would like to draw and add it to the base object we created ("p"):
+
+p + geom_point() # geom_point() creates a scatterplot
+# QUESTION: how would you describe the association between GDP and life expectancy based on this graph?
+
+# Healy's (2019) summary of the graphing process in R:
+# 	1. Tell the ggplot() function what our data is.
+#	2. Tell ggplot() what relationships we want to see. For convenience we will put the results of the first two steps in an object called p.
+# 	3. Tell ggplot how we want to see the relationships in our data (i.e. choose a geom).
+#	4. Layer on geoms as needed, by adding them to the p object one at a time.
+#	5. Use some additional functions to adjust scales, labels, tick marks, titles.
+
+# Let's add an additional geom to the graph:
+
+p + geom_point() + 
+  geom_smooth() # 'smooth' the trend line 
+
+# A quick (and important) aside: note how the '+' symbol appears at the end of the line. This is crucial as placing on the next line will result in the
+# command not executing. This is because R understands the end of a line (i.e. a carriage return) as being the end of the command.
+
+p + geom_point() + 
+  geom_smooth() +
+  scale_x_log10() # adjust the x axis by converting to log (base 10) values
+# QUESTION: what have we done by converting the x axis to a log scale?
+
+p + geom_point() + 
+  geom_smooth() +
+  scale_x_log10(labels = scales::dollar) # adjust the x axis labels by including dollar values instead of scientific notation
+# Note the use of 'scales::dollar' in the above code - this calls on the dollar() function from the scales library, without having to load the entire library.
+
+# We can manually adjust the aesthetic of the graph by including it as an argument of the geom() function i.e. it goes outside of aes().
+# Here is some advice from Grolemund & Wickham (2017):
+#	- color = "name of color" i.e. is a string
+#	- size = number in mm
+#	- shape = number between 0 and 24
+
+p + geom_point(colour = "purple") + 
+  geom_smooth() +
+  scale_x_log10(labels = scales::dollar) # adjust the colour of the plotted points; note how it is included in the geom() funciton, NOT aes()
+# TASK: change the colour and size of the trend line in the above plot (hint: size takes an integer as its value, not a string).
+
+# Finally, let's add some labels and descriptions of the plot's various components:
+
+p + geom_point(alpha = 0.3) + 
+  geom_smooth() +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x = "GDP Per Capita", y = "Life Expectancy in Years",
+       title = "Economic Growth and Life Expectancy",
+       subtitle = "Data points are country-years",
+       caption = "Source: Gapminder.")
+# QUESTION: what effect does the 'alpha = 0.3' option have on the plot?
+
+# TASK: disaggregate the above plot by a third variable: 'continent' (hint: you need to edit the p object).
+
+# ggplot expects your data to be tidy:
+#	- every variable is a column
+#	- every observation is a row
+
+# A final note on ggplot(): we can perform the mapping of variables to aesthetic in the geom_() function. This is particularly
+# useful when disaggregating by additional variables i.e. the points can be coloured by a third variable, while the trend line remains 
+# unaffected.
+
+
+# 4. Saving graphs #
+
+# We often want to save plots individually for inclusion in papers, presentations, sharing with colleagues etc. ggplot() makes this easy:
+
+p_out <- p + geom_point(alpha = 0.3) + 
+  geom_smooth() +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x = "GDP Per Capita", y = "Life Expectancy in Years",
+       title = "Economic Growth and Life Expectancy",
+       subtitle = "Data points are country-years",
+       caption = "Source: Gapminder.") # store the full plot as a new object 'p_out'
+
+ggsave("mylovelygraph.png", plot = p_out, height = 8, width = 12) # the first argument is the file path and name, the second is the name of the plot to save,
+# the third and fourth control the size (in inches) of the image (though you can add a fifth argument ('units = ') to be specific.
+
+ggsave("mylovelygraph.pdf", plot = p_out, height = 8, width = 12) # save as pdf
+
+
+# 5. Data management #
+
+# We often need to get our data in a format suitable for plotting: we might need to 
+# collapse our data set to create aggregate values (e.g. yearly trends), or compute
+# summary statistics from the raw data, or disaggregate our data into different pieces.
+
+# In this section you will learn how to perform some crucial data management tasks using ggplot
+# and R more generally. Using ggplot, we will focus on 'grouping', 'faceting' and 'transforming'
+# our data for plotting.
+
+
+# 5.1. Grouping
+# Let's try and produce a graph of life expectency trajectory for each country over time:
+library(gapminder) # load in gapminder data - see https://www.gapminder.org/
+gapminder
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = year,
+                          y = lifeExp))
+p + geom_line() 
+# QUESTION: what do you think has gone wrong here? Hint: take a look at the rows in the data.
+# If you're looking for comfort in your graphing troubles, check out @accidental__aRt on Twitter...
+
+# Let's see if we can correct the issue using the 'group' aesthetic:
+p <- ggplot(data = gapminder,
+            mapping = aes(x = year,
+                          y = lifeExp))
+p + geom_line(aes(group=country))
+# That looks more like it: one line per country. It's still pretty rough-looking but we'll
+# learn how to spruce it up later.
+# QUESTION: how would you interpret the trend in life expectency over time?
+
+# TASK: try grouping by another variable of your choice.
+
+# The 'group' aesthetic is only necessary if the information ggplot needs is not built-in
+# to the variables being plotted.
+
+
+# 5.2 Faceting
+
+# This is a very useful function for creating separate plots in the one visualisation.
+# We do this by including a third variable in the ggplot command.
+
+# For example, the plot of life expectency we produced above is cluttered and it would be useful to separate lines
+# by continent to see if there are regional differences in life expectency.
+x11()
+p <- ggplot(data = gapminder,
+            mapping = aes(x = year,
+                          y = lifeExp))
+
+p + geom_line(aes(group=country)) +
+  facet_wrap(~ continent)
+# TASK: describe the results of this graph.
+# We use the '~' symbol to tell the facet_wrap command that we are providing it with a
+# formula - in this case just a single variable but we could add more.
+
+p + geom_line(aes(group=country)) +
+  facet_wrap(~ continent, ncol = 5)
+# QUESTION: what happens when we add the 'ncols' argument to the facet?
+
+# Let's produce a cleaner graph:
+p <- ggplot(data = gapminder, mapping = aes(x = year, y = lifeExp))
+
+p + geom_line(color="gray70", aes(group = country)) +
+  geom_smooth(size = 1.1, method = "loess", se = FALSE) +
+  scale_y_log10(labels=scales::dollar) +
+  facet_wrap(~ continent, ncol = 5) +
+  labs(x = "Year",
+       y = "Life Expectency",
+       title = "Life Expectency on Five Continents")
+# Still needs some work but not bad...
+
+# facet_wrap() function is best used when you want multiple plots based on a single 
+# categorical variable. If you a more complex graph, like one based on a contingency table,
+# it is best to use the facet_grid() function.
+
+# Load in the General Social Survey (GSS) 2016 data
+library(socviz) # load in socviz suite of data sets and other resources
+library(tidyverse) # load in tidyverse suite of packages
+
+gss_sm
+str(gss_sm)
+glimpse(gss_sm) # we have a good deal more categorical variables we can work with
+# See http://gss.norc.org/ for more information about the survey. It is roughly equivalent
+# to the Understanding Society survey in the UK.
+
+# Let's explore the association between respondent age and number of offspring:
+p <- ggplot(data = gss_sm, mapping = aes(x = age, y = childs))
+
+x11()
+p + geom_point(alpha = 0.2) +
+  geom_smooth() +
+  facet_grid(sex ~ race)
+# Note the syntax of facet_grid(): we are essentially saying "give us a plot of age and offspring,
+# BY sex and race.
+# QUESTION: what can you say about the relationship between age and offspring, and how it
+# is mediated by a respondent's sex and race?
+
+x11()
+p + geom_point(alpha = 0.2) +
+  geom_smooth() +
+  facet_grid (~ race + sex)
+# QUESTION: what is the difference between using (sex ~ race) and (~ sex + race)?
+
+
+# TASK: explore the gss_sm data set and produce a multi-way graph of two numeric variables
+# disaggregated by one or more categorical variables. Write a note summarising the results
+# of this graph.
+
+# An alternative to facet_() functions is the subset() function:
+str(midwest)
+class(midwest$state)
+print(as.factor(midwest$state)) # 5 states in this data set
+
+oh_wi <- c("OH", "WI") # specify a list of states we are interested in
+
+p <- ggplot(data = subset(midwest, subset = state %in% oh_wi),
+            mapping = aes(x = percollege, fill = state))
+
+p + geom_histogram(alpha = 0.4, bins = 20)
+# TASK: describe each component of the above ggplot.
+
+
+# 5.3 Transforming
+# Some geom_() functions perform some work on the data before presenting the results.
+# Every geom_() function has an associated stat_() function e.g. the geom_smooth() function
+# allows us to specify different methods for drawing a line that summaries the data points.
+# The reverse is also true: every stat_() function has a geom_() function.
+# Let's dig into this in more detail:
+
+p <- ggplot(data = gss_sm,
+            mapping = aes(x = bigregion))
+p + geom_bar() 
+# geom_bar() calculates and plots the counts/frequencies for the categories; what if we
+# wanted proportions instead?
+
+p + geom_bar(mapping = aes(y = ..prop..))
+# Behind the scenes geom_bar() has called on its default stat_() function to produce
+# two temporary variables: ..count.. and ..prop..
+# They are bookended by full stops to distinguish them from variables in the data set.
+# QUESTION: why do you think each bar sums to 1?
+
+# Let's try fixing the summing issue:
+p + geom_bar(mapping = aes(y = ..prop.., group = 1)) # that's better
+# Adding the 'group = 1' argument tells geom_bar() to treat the data set as a single group.
+
+# Let's get more familiar with stat_() functions:
+table(gss_sm$religion) # frequency table of religion variable
+
+p <- ggplot(data = gss_sm,
+            mapping = aes(x = religion, fill = religion))
+p + geom_bar() + guides(fill = FALSE) 
+# guides() controls the display of the legend; in this instance we've suppressed the display of this feature.
+
+# Now let's disaggregate religion by a second categorical variable:
+p <- ggplot(data = gss_sm,
+            mapping = aes(x = religion, fill = religion))
+
+p + geom_bar(mapping = aes(y = ..prop.., group = 1)) +
+  facet_wrap(~ bigregion) +
+  guides(fill = FALSE) 
+# TASK: try and add colour and labels to the above graph.
+
+# Let's look at histograms and their stat_() functions:
+p <- ggplot(data = midwest,
+            mapping = aes(x = area))
+p + geom_histogram(bins = 10)
+# TASK: change the number of bins and describe the effect on the display of the information.
+
+# Transforming data is vary useful step in producing effective visualisations.
+# However, it is often easier to transform the data prior to calling the ggplot command;
+# we'll learn to do this soon [PROBABLY EARLIER IN THE WORKSHOP]
+
+
+# 6. Communicating Analytical Results #
+
+# In this section we employ our graphing skills and techniques to the results of statistical models.
+# We can do this is two ways:
+# - employ modelling techniques as part of the plotting process i.e. directly within geoms;
+# - use specialist packages to capture the results of statistical models and pass them to the plot.
+
+# 6.1 Creating models within plots
+
+# We saw earlier in the workshop an example of this approach: using geom_smooth() to 
+# display a line of best of fit on a scatterplot.
+
+library(gapminder)
+library(ggplot2)
+gapminder
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = log(gdpPercap), y = lifeExp))
+
+p + geom_point(alpha=0.1) +
+  geom_smooth(color = "steelblue", fill="steelblue", method = "lm")
+
+p + geom_point(alpha=0.1) +
+  geom_smooth(color = "tomato", method = "lm", size = 1.2, 
+              formula = y ~ splines::bs(x, 3), se = FALSE)
+
+# TASK: describe the difference between the lines fitted for each of these graphs. Which one
+# do you think fits the data better?
+
+# 6.1.1 Fit multiple models on a single graph
+# This is easily achieved by stacking multiple geom_smooth() functions:
+p + geom_point(alpha=0.1) +
+  geom_smooth(color = "steelblue", fill="steelblue", method = "lm") +
+  geom_smooth(color = "tomato", method = "lm", size = 1.2, 
+              formula = y ~ splines::bs(x, 3), se = FALSE)
+
+# There is an extra step we need to take in order to display the legend; it doesn't automatically
+# appear as the geom_smooth() functions are not logically connected e.g. they are not categories
+# of a single variable.
+
+# First, load in some color palettes
+model_colors <- RColorBrewer::brewer.pal(3, "Set1")
+model_colors 
+
+# Second, adjust the geom_smooth() color and fill specifications
+p1 <- p + geom_point(alpha=0.1) +
+  geom_smooth(aes(color = "OLS", fill = "OLS"), method = "lm") +
+  geom_smooth(aes(color = "Poly", fill = "Poly"), method = "lm", size = 1.2, 
+              formula = y ~ splines::bs(x, 3), se = FALSE)
+
+# Third, map the color palette to each geom_smooth()
+p2 <- p1 + scale_color_manual(name = "Models", values = model_colors) +
+  scale_fill_manual(name = "Models", values = model_colors) +
+  theme(legend.position = "top")
+
+x11()
+p2
+
+
+# 6.2 Saving and graphing model results
+
+# In this section we demonstrate how to store and plot the results of three types of statistical models:
+# - multiple regression (OLS)
+# - logistic regression (binomial)
+# - count regression (Poisson)
+
+# There are a plethora of other models that can be estimated in R which we cannot cover here.
+# If you are interested in learning more, you can access the materials from our Predictive Analytics
+# course (ADD LINK!); we also recommend Gelman and Hill (2018), Data Analysis Using Regression and Multilevel/Hierarchical Models.
+
+# 6.2.1 How model results are stored
+# The good news: model results, just like tables, graphs, data frames etc, are stored as objects in R;
+# the bad news is they have a slightly more complicated structure...
+
+# First, let's regress life expectancy on a couple of independent variables
+out <- lm(formula = lifeExp ~ gdpPercap + pop + continent,
+          data = gapminder)
+out
+
+summary(out) # look at values of this object
+str(out) # look at the internal structure of this object
+attributes(out) # look at the attributes of this object
+
+# The attributes() function gives us a better sense of the model results; let's explore some:
+out$coefficients # model coefficients (in an unhelpful format though)
+out$model # data underpinning the model
+out$effects # estimated effects for each observation
+out$df.residual # degrees of freedom
+?lm # see the 'Values' section for a description of each element of the out object
+
+# 6.2.1 Some general tips for presenting the results of statistical models
+
+# 1. Focus on the substantive interpretation of your findings
+# 2. Communicate model uncertainty
+# 3. Show the underlying data where possible
+
+# 6.3. Graphing statistical models
+# We will make use of David Robinson's 'broom' package to help us extract model results
+# and graph them with ggplot2.
+
+library(broom)
+?broom
+vignette("broom")
+# 'broom' is a supremely useful package that operates at three levels:
+# - component-level i.e. model coefficients and significance values
+# - observation-level i.e. fitted values for each observation in the data
+# - model-level i.e. model summary statistics (e.g. R-squared, F test)
+
+# 6.3.1 Component-level statistics
+
+library(socviz)
+mod_comp <- tidy(out, conf.int = TRUE)
+mod_comp %>% round_df()
+
+p <- ggplot(mod_comp, mapping = aes(x = term,
+                                    y = estimate))
+
+p + geom_point() + coord_flip() # produces a Cleveland plot of the model point estimates'
+# not bad but we can refine the graph further:
+
+mod_comp <- subset(mod_comp, term %nin% "(Intercept)") # remove the intercept from the model table
+mod_comp$term <- prefix_strip(mod_comp$term, "continent") # remove the 'continent' prefix from the values of 'term'
+
+p <- ggplot(mod_comp, mapping = aes(x = reorder(term, estimate),
+                                    y = estimate, ymin = conf.low, ymax = conf.high))
+
+p + geom_pointrange() + coord_flip()
+
+# TASK: describe what each component of the above plot is doing.
+# TASK: add informative labels to the above graph, and change the size and color of the points.
+
+# 6.3.2 Observation-level statistics
+
+mod_obs <- augment(out)
+View(mod_obs)
+str(mod_obs)
+# TASK: describe the variables/attributes of the mod_obs object e.g. what do you think 'fitted' represents?
+# HINT: look at the help and vignette files for broom.
+
+# Note how the augment() function only included variables from the original data set that were
+# included in the model; we can override this default specification: 
+mod_obs2 <- augment(out, data = gapminder)
+View(mod_obs2)
+str(mod_obs2)
+# augment() returns the following additional variables (Healy, 2019):
+# .fitted — The fitted values of the model.
+# .se.fit — The standard errors of the fitted values.
+# .resid — The residuals.
+# .hat — The diagonal of the hat matrix.
+# .sigma — An estimate of residual standard deviation when the corresponding observation is dropped from the model.
+# .cooksd — Cook’s distance, a common regression diagnostic; and
+# .std.resid — The standardized residuals.
+
+
+# We can now graph the observation-level results of the model:
+p <- ggplot(data = mod_obs,
+            mapping = aes(x = .fitted, y = .std.resid))
+p + geom_point()
+
+# QUESTION: do you think a basic OLS is a good fit for the data: whay or why not?
+# TASK: graph predicted values of the outcome against other variables in the mod_obs table.
+
+
+# 6.3.3 Model-level statistics
+
+glance(out) # produces a table of model summary statistics
+
+# This doesn't look immediately useful - why would we want to graph the summary statistics for one model?
+# However, the utility of glance() is evident when estimating and comparing multiple models.
+
+# For example, let's estimate a model on observations relating to European countries in 1977:
+eu77 <- gapminder %>% filter(continent == "Europe", year == 1977)
+
+fit <- lm(lifeExp ~ log(gdpPercap), data = eu77)
+summary(fit)
+
+# TASK: produce and graph component and observation-level statistics for this model.
+
+# Estimating models in this manner could lead to quite a bit of redundant code: for instance,
+# we would have to create a subset of the data for every continent and year.
+# Best if we use a new command, nest(), coupled with a piping command to create subsets automatically:
+subsamp <- gapminder %>% 
+  group_by(continent, year) %>%
+  nest()
+
+subsamp
+# QUESTION: what do you think the values of the variable 'data' represent?
+# TASK: explore the values and class of 'data' variable.
+
+# We can also work backwards i.e. unnest the data set:
+subsamp %>% 
+  filter(continent == "Europe", year == 1977) %>%
+  unnest()
+
+# O.K. we're almost ready to estimate and graph multiple models
+# First, create a function for estimating linear regressions:
+fit_ols <- function(df) {
+  lm(lifeExp ~ log(gdpPercap), data = df)
+}
+
+# The above is user-defined function called fit_ols; it takes one argument (df), which is used
+# to identify the data underpinning the model.
+
+# Second, we map the regression function to each row in the data column:
+regout <- gapminder %>%
+  group_by(continent, year) %>%
+  nest() %>%
+  mutate(model = map(data, fit_ols))
+
+# Let's take a moment to unpick the above command:
+# 1. We create an object to store the results of the piping command (regout)
+# 2. We group the gapminder data by continent and year
+# 3. We nest the rows underlying the group_by command 
+#   e.g. Europe 1977 is made up of individual observations for multiple countries
+# 4. We create a new list variable called model that stores the results of the regression commands
+
+regout
+regout$model
+# QUESTION: how many regression commands were executed?
+
+# Finally, we can extend our piping command to extract model summary statistics:
+regsum <- gapminder %>%
+  group_by(continent, year) %>%
+  nest() %>%
+  mutate(model = map(data, fit_ols)) %>%
+  mutate(tidied = map(model, tidy)) %>% 
+  unnest(tidied, .drop = TRUE) %>% 
+  filter(term %nin% "(Intercept)" & continent %nin% "Oceania")
+
+regsum
+summary(regsum)
+# TASK: describe the additional commands we have included in the above code i.e. from the second mutate command to the end.
+
+# Phew! Lot of clever work has gone into getting some model summary statistics ready for the fun part: plotting :)
+
+p <- ggplot(data = regsum, mapping = aes(x = year, y = estimate,
+  ymin = estimate - 2*std.error,
+  ymax = estimate + 2*std.error,
+  group = continent, color = continent))
+
+x11()
+p + geom_pointrange(position = position_dodge(width = 1)) +
+  scale_x_continuous(breaks = unique(gapminder$year)) + 
+  theme(legend.position = "top") +
+  labs(x = "Year", y = "Estimate", color = "Continent")
+
+# QUESTION: how would you characterise the effect of GDP on life expectancy,
+# over time and across continents?
+
+# 6.3.4 Graphing logistic model results
+
+library(margins)
+
+gss_sm$polviews_m <- relevel(gss_sm$polviews, ref = "Moderate")
+
+out_bo <- glm(obama ~ polviews_m + sex*race,
+              family = "binomial", data = gss_sm)
+summary(out_bo)
+
+bo_m <- margins(out_bo)
+summary(bo_m)
+plot(bo_m)
+
+##
+  # Come back to this section with different data (maybe charity admin data?)
+##
+
+# As you can probably surmise, graphing the results of statistical models is tricky, in as much
+# as the plotting elements are fairly standard but you must have a good grasp of the 
+# purpose, mechanics and results of the model being estimated. 
+
+# ggplot() is not your only option and we encourage to explore the use of base R plots
+# and the coefplot library.
+
+# There are additional issues we were unable to cover, such as graphing estimates from 
+# complex surveys, and we refer you to chapter 6 of Healy (2019) and REFERENCE for further information.
+
+
+# 7. Refining Graphs #
+
+# In this section we build on the foundations we've laid earlier by adding layers of sophistication to our plots.
+# We will learn new geom_() functions and how to combine them effectively; move away from ggplot's default options and
+# start customising our graphs; and delve deeper into the scale(), guide() and theme() functions.
+
+# 7.1 New geom() plots
+
+# Representing multiple histograms in a single plot is made easy by using the geom_freqpoly() function:
+library(gapminder)
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = lifeExp, colour = continent))
+
+p + geom_freqpoly() # represents a histogram using lines instead of bars but is otherwise equivalent
+# TASK: change the bandwidth of the histograms
+# QUESTION: can you make meaninful comparisons between the distributions of the life expectancy for each continent? Why or why not?
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = lifeExp, y = ..density.., colour = continent))
+
+p + geom_freqpoly() 
+# TASK: describe what effect 'y = ..density..' has on the graph, especially in terms of making comparisons between distributions.
+
+
+# 7.1.1 Dealing with two y-axes
+# It's usually not good practice to plot lines representing different time series on two axes - 
+# there is too much potential for misleading e.g. altering the y scales to display an
+# apparent correlation.
+
+# Instead, you can do the following:
+# - display the line graphs side-by-side (i.e. use faceting)
+# - create an index of each time series and plot both lines on the same y-axis
+
+
+# We can zoom in on a plot using coord_cartesian():
+contdata <- gapminder %>%
+	group_by(continent, year) %>%
+	summarise(mn_lifeExp = mean(lifeExp), mn_loggdp = mean(log2(gdp)))
+
+p <- ggplot(data = contdata,
+		mapping(aes(x = mn_loggdp, y = mn_lifeExp)
+
+p + geom_point() # let's zoom in a particular area of the plot:
+p + geom_point() + coord_cartesian(ylim = c(0, 50))
+# This approach doesn't throw away any data, it simply focuses on a particular range of values for either the y or x axis.
+
+# To restrict the range of values included in the plot, we use the xlim() and ylim() functions:
+p + geom_point() + ylim(0, 50) # this removes observations with values outwith the range specified
+
+# Of course, you can always filter your data to produce a subset of observations in a desired range.
+
+# A tile plot
+diamonds %>% 
+  count(color, cut) %>%  
+  ggplot(mapping = aes(x = color, y = cut)) +
+    geom_tile(mapping = aes(fill = n))
+# TASK: describe the plot produced by this command; what does it tell you about combinations of diamond colour and quality?
+
+
+# 7.3.1 Using colour effectively via the scale() function
+
+# We spoke early in the workshop about using colours intelligently. For example,
+# the categories of an unordered categorical variable require distinct colours, while
+# an ordered variable is better served by the use of gradation.
+# The default options of ggplot() are usually appropriate but we may want to specify our
+# own preferences via the scale() function and the RColorBrewer package.
+
+# Let's explore different colour palettes using the organdata data set:
+install.packages("RColorBrewer")
+library(RColorBrewer)
+
+x11()
+display.brewer.all() # view the palettes available via RColorBrewer
+# Notice we have three types of palettes:
+# 1. Sequential
+# 2. Qualitative
+# 3. Divergent
+
+p <- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors, color = world))
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Pastel2") +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "top")
+
+# TASK: use different palettes with the above graphs; which is best for converying differences
+# between types of countries?
+
+# It is possible to create your own colour palettes in R; see this article for more information:
+# https://data.library.virginia.edu/setting-up-color-palettes-in-r/
+
+
+# 7.3.2 Changing the appearance of a graph via the theme() function
+
+# Combining ggplot() and the theme() function grants us considerable flexibility in how
+# we construct the design elements of the plot. It also allows us to adopt standardised
+# themes for our graphs e.g. Economist or Wall Street Journal graphics.
+
+# First things first: let's get rid of the awful grey grid background of our graphs...
+p <- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors, color = world))
+
+p + geom_point(size = 2) +
+  theme_bw() +
+  theme(legend.position = "top",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+
+p + geom_point(size = 2) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) +
+  theme_grey() +
+  theme(legend.position = "top")
+
+# Let's load in some new themes and apply them:
+install.packages("ggthemes")
+library(ggthemes)
+
+p + geom_point(size = 2) +
+  theme_economist() +
+  theme(legend.position = "top")
+
+# It is also possible to adjust the default options associated with a theme:
+p + geom_point(size = 2) +
+  theme_economist() +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 30)) # adjust the size of the legend title
+
+# "Flashy" themes like the Economist or WSJ are all well and good for one-off posters etc
+# but you may want to focus on plainer plots for academic publications. The cowplot package
+# provides a theme suitable for such publications.
+install.packages("cowplot")
+library(cowplot)
+?cowplot # the help documentation is not very useful!!!
+
+p + geom_point(size = 2) +
+  theme_cowplot() +
+  theme(legend.position = "top")
+
+
+
+
+
+
+# 7.1 Summarising data
+# It is usually more awkward and time consuming to rely on geom stat_() functions to summarise our variables
+# during the graphing process. It is better to get into the habit of preparing our data in advance of plotting,
+# using the very handy 'dplyr' package that comes with the 'tidyverse' distribution.
+
+# For example, say we want to plot the results of a frequency table:
+library(socviz) # load in socviz suite of data sets and other resources
+library(tidyverse) # load in tidyverse suite of packages
+
+gss_sm
+str(gss_sm)
+glimpse(gss_sm)
+
+table(gss_sm$bigregion, gss_sm$religion) # crosstab of our two variables of interest
+
+# To build our summary table, we need to perform a sequence of tasks on our data set
+# using the pipe operator %>%.
+# Think of this process as taking data as an input, transferring it into some functions,
+# and being converted into some results (like a pipeline). In the words of Healy (2019):
+# "A pipeline is typically a series of operations that do one or more of four things:
+#   1. Group the data into the nested structure we want for our summary, such as “Religion by Region” or “Authors by Publications by Year”.
+#   2. Filter or select pieces of the data by row, column, or both. This gets us the piece of the table we want to work on.
+#   3. Mutate the data by creating new variables at the current level of grouping. This adds new columns to the table without aggregating it.
+#   4. Summarize or aggregate the grouped data. This creates new variables at a higher level of grouping. For example we might calculate means with mean() or counts with n(). This results in a smaller, summary table, which we might do more things on if we want."
+
+vignette("dplyr") # explore some use cases employing the 'dplyr' commands
+
+# Let's create a crosstab of religion by region:
+rel_by_reg <- gss_sm %>% 
+  group_by(bigregion, religion) %>%
+  summarize(N = n()) %>%
+  mutate(freq = N / sum(N), pct = round((freq*100), 0))
+
+View(rel_by_reg) # display the summary table we created
+
+# There's a lot going on in the above command, so let's take it piece-by-piece:
+#   1. we create a new object
+#   2. state which data set we are wanting to use
+#   3. take that data and group it by region and religion (similar to the table() command earlier)
+#   4. summarise this table by creating a new column (N) which is a count of observations
+#   5. create two new variables: proportion and percentage of observations in each category
+
+# If you were apprehensive about learning or using R, the above command is a valid reason:
+# it is more cumbersome than performing the same task in Stata or SPSS, and requires us
+# to explicitly delineate the logic and steps of producing the summary table.
+
+# There are user-written packages that can produce crosstabs more efficiently than the above
+# method (e.g. 'crosstab' from the 'descr' package) but using the pipe operator in this
+# way is a very common task in R and you just have to get used to it :)
+
+# TASK: play around with the pipe command we specified (i.e rel_by_reg etc);
+# try removing layers starting at the bottom - how does that effect the final table?
+
+# Let's check if the percentages sum to 100 in our summary table:
+sanity_check <- rel_by_reg %>%
+  group_by(bigregion) %>%
+  summarise(total = sum(pct))
+
+sanity_check # some rounding errors but pretty much correct
+
+# Let's plot the rel_by_reg object:
+p1 <- ggplot(data = rel_by_reg, mapping = aes(x = bigregion, y = pct, fill = religion))
+
+p1a + geom_col() +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top") # not bad at all, but let's stack the bars side-by-side:
+
+p1b + geom_col(position = "dodge2") +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top")
+
+# QUESTION: why did we use geom_col() instead of geom_bar()?
+
+# I think we can do better; let's swap the x and y axes:
+p2 <- ggplot(data = rel_by_reg, mapping = aes(x = pct, y = bigregion, fill = religion))
+
+p2 + geom_col(position = "dodge2") +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top") # ehh...
+
+# geom_col has an internal logic that prevents simply swapping the axes in the mapping function.
+# Thankfully there is another way:
+p3 <- ggplot(data = rel_by_reg, mapping = aes(x = religion, y = pct, fill = religion))
+
+p3 + geom_col(position = "dodge2") +
+  labs(x = NULL ,y = "Percent", fill = "Religion") +
+  guides(fill = FALSE) + # turns off the legend
+  coord_flip() + # flips the co-ordinates of the plot i.e. swaps the axes (religion and pct)
+  facet_grid(~ bigregion)
+
+#QUESTION: in your opinion, which of the plots communicates the underlying patterns best (p1a, p1b, p2 or p3)?
+
+
+# 6.2 Continuous data
+
+# Let's apply the piping and plotting techniques to a different data set: organdata
+# The data set contains more than a decade’s worth of information on the donation of organs for transplants in seventeen OECD countries.
+
+organdata
+glimpse(organdata)
+
+# Let's explore a subset of the data set:
+organdata %>% select(1:6) %>% sample_n(size = 20)
+organdata %>% select(country, year, gdp) %>% sample_n(size = 5)
+
+# TASK: describe the results of the above commands.
+
+# TASK: produce a scatterplot of the mean number of organ donors by year and interpret the results.
+
+# Let's explore country-level variation in the mean number of organ donors:
+p <- ggplot(data = organdata, mapping = aes(x = country, y = donors))
+
+p + geom_boxplot() +
+  coord_flip() # pretty good but the lack of a suitable ordering makes it difficult to compare countries
+
+p <- ggplot(data = organdata, 
+            mapping = aes(x = reorder(country, donors, na.rm=TRUE), y = donors))
+
+p + geom_boxplot() +
+  coord_flip() +
+  labs(x = NULL)
+
+# QUESTION: what is the meaning of each component of the reorder() function?
+
+# reorder() automatically calculates the mean of the second variable in the function.
+# TASK: recreate the above boxplot but specify a different summary statistic (e.g. the median, 95th percentile, max etc)
+# NB DMD: figure out how to perform the above TASK
+
+p <- ggplot(data = organdata, 
+            mapping = aes(x = reorder(country, donors, na.rm=TRUE), 
+                          y = donors, fill = world))
+
+p + geom_boxplot() +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(legend.position = "top")
+
+# It is usually good practice to plot the distribution of categorical variables on the y axis.
+# It's been interesting to look at the boxplot distribution of donors but perhaps we can
+# make things simpler by focusing on a single value for this variable.
+
+# First, create a summary table of the variables we want to plot:
+country_analysis <- organdata %>% group_by(consent_law, country) %>%
+  summarise(donors_mn = mean(donors, na.rm = TRUE),
+            donors_sd = sd(donors, na.rm = TRUE),
+            gdp_mn = mean(gdp, na.rm = TRUE))
+
+country_analysis
+
+# TASK: describe the logic and results of the above piping command.
+
+# Second, plot the summary table
+p <- ggplot(data = country_analysis, 
+            mapping = aes(x = reorder(country, donors_mn),
+                          y = donors_mn, color = consent_law))
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  labs(x = NULL, y = "Number of donors (mean)", color = "Consent law") +
+  theme(legend.position = "top")
+
+# QUESTION: are there meaningful country-level differences in the mean number of organ donors?
+# what about by countries with different consent laws?
+
+# Well done, you have combined data wrangling skills with clear, sophisticated plotting specifications
+# to produce an effective visualisation: a Cleveland dotplot. However, there is always room for improvement...
+# Let's rationalise the code that produced our summary table:
+country_analysis <- organdata %>% group_by(consent_law, country) %>%
+  summarise_if(is.numeric, funs(mean, sd, median), na.rm = TRUE)
+
+country_analysis
+str(country_analysis)
+View(country_analysis)
+
+# TASK: describe the logic and results of the new 'country_analysis' piping command.
+
+# The next improvement we can make is to produce separate plots by the 'consent_law' variable:
+p <- ggplot(data = country_analysis, 
+            mapping = aes(x = reorder(country, donors_mean),
+                          y = donors_mean)) # remember the names changed when we allowed R to create the variables
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law)
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") # side-by-side is not very legible; this can be fixed by using the 'ncol' argument as part of facet_wrap()
+
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1)
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") # repetiion of country names across panels; we need to free the y axis to select its own values
+
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1, scales = "free_y")
+labs(x = "Number of donors (mean)", y = NULL) +
+  theme(legend.position = "top") 
+
+# TASK: play around with 'ncol' and 'scales' options.
+
+# As intelligent analysts, you may be critical of the above graph: "Instructor, what use is a
+# point estimate without some knowledge of its variance or error?"
+# Well my learned friends, ggplot() provides just the geom:
+x11()
+p + geom_pointrange(mapping = aes(ymin = donors_mean - donors_sd, ymax = donors_mean + donors_sd)) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1, scales = "free_y")
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") 
+
+# TASK: adjust the axis labels to remove the defaulting labelling.
+
+
+
+
+
+
+
+
+# 7. Working with Data #
+# Getting data into the right shape for plotting. [ADD SOME OF THIS MATERIAL TO THE BEGINNING]
+
+
+# 8. Refining Plots #
+
+# 8.1 Plotting text
+
+library(gapminder)
+gapminder
+glimpse(gapminder)
+
+table(gapminder$continent)
+levels(gapminder$continent)
+
+# Let's examine life expectancy
+lexp_analysis <- gapminder %>%
+  filter(pop < 5000000) %>%
+  group_by(country) %>%
+  summarise(lexp_mean = mean(lifeExp, na.rm = TRUE),
+            pop_mean = mean(pop, na.rm = TRUE))
+
+# TASK: describe what the above piping command is doing.
+
+p <- ggplot(data = lexp_analysis,
+            mapping = aes(x = pop_mean, y = lexp_mean))
+
+x11()
+p + geom_point() + geom_text(mapping = aes(label = country)) # doesn't look great; let's make some tweaks
+
+p + geom_point() + geom_text(mapping = aes(label = country), hjust = 0) # right-justify the text
+
+# The default geom_text() function is a bit awkward to use; better to employ a user-written package called ggrepel()
+install.packages("ggrepel")
+library(ggrepel)
+
+# U.S. presidential election results 1824-2016
+elections_historic
+str(elections_historic)
+
+elections_historic %>% select(2:7, 10) # examine a subset of the variables and rows
+
+# Let's produce a scatterplot of win share of the popular vote and electoral college vote
+# First, define some objects to store the labels
+p_title <- "Presidential Elections: Popular & Electoral College Margins"
+p_subtitle <- "1824-2016"
+p_caption <- "Data for 2016 are provisional."
+x_label <- "Winner's share of Popular Vote"
+y_label <- "Winner's share of Electoral College Votes"
+
+# Second, define the data and variables
+p <- ggplot(elections_historic, aes(x = popular_pct, y = ec_pct,
+                                    label = winner_label))
+
+# Third, produce the plot
+x11()
+p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
+  geom_vline(xintercept = 0.5, size = 1.4, color = "gray80") +
+  geom_point() +
+  geom_text_repel() +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# QUESTION: what can you conclude (if anything) about the relationship between popular and electoral college win shares?
+# TASK: search for help on the geom_text_repel() function; play around the with above graph by altering the each element.
+
+# 8.2. Labelling outliers
+
+# Sometimes we just want to highlight particular data points or cases. We can use geom_text_repel()
+# to do this by telling it to use a subset of the data:
+x11()
+p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
+  geom_vline(xintercept = 0.5, size = 1.4, color = "gray80") +
+  geom_point() +
+  geom_text_repel(data = subset(elections_historic, popular_pct < .5 & ec_pct > .7)) +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# TASK: describe the effect of the addition of subset() to the plot.
+
+# An alternative approach is to create an indicator (dummy) variable and subset by it.
+
+# 8.3. Writing and drawing in the plot area
+
+# Sometimes we are interested in adding our own annotations to the graph, perhaps to 
+# pick out surprising data points or to add some commentary to the patterns observed.
+
+x11()
+p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
+  geom_vline(xintercept = 0.5, size = 1.4, color = "gray80") +
+  geom_point() +
+  annotate(geom = "text", x = .35, y = .45, label = "The unpopular quadrant", hjust = 0) +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# TASK: describe the logic and results of the annotate() function.
+
+# We can also draw shapes on the plot:
+x11()
+p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
+  geom_vline(xintercept = 0.5, size = 1.4, color = "gray80") +
+  geom_point() +
+  annotate(geom = "rect", xmin = .60, xmax = .65, ymin = .80, ymax = .99, fill = "blue", alpha = .3)
+scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+
+
+
+
+
+# Combining Individual Plots #
+
+
+# Color Considerations #
+
+# Select a different colour palette:
+ggplot(data = auto) + 
+  geom_point(mapping = aes(x =auto$price, y = auto$mpg, shape = auto$foreign, color = factor(auto$rep78))) +
+  scale_color_brewer(palette = "Spectral")
+# QUESTION: what did we need to add the factor prefix to auto$rep78; what happens if you remove the prefix?
+
+
+# Labelling Plots #
+
+ggplot(data = auto) + 
+  geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4) +
+  labs(x = "Miles Per Gallon (MPG)", y = "No. of observations",
+       title = "Fuel Efficiency", fill = "Region of Origin")
+
+# TASK: create a scatter plot of two numeric variable and distinguish observations by a 
+# third variable using the colour option. Add appropriate labels (hint: replace fill with colour
+# in the above graph to change the text).
+
+
+# Storing and Reusing Plots #
+
+# Helpfully, R allows us to save the results of a plot as an object.
+plt1 <- ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4)
+plt1
+# This approaches comes in useful when combining different plots in a single visualisation.
+
+
+# Final Thoughts #
+
+# Congratulations on progressing through the workshop. Our aim was to equip you with a proficiency in data visualisation using R as rapidly and painlessly as possible.
+# While you have covered a great deal of material and skills, there is a bigger and badder world of R programming and graphing out there.
+# Here are some suggestions for where you might go next in your skills development:
+#	- Wanting to delve deeper into ggplot2? Consult ggplot2: Elegant Graphics for Data Analysis [https://www.amazon.com/dp/331924275X/ref=cm_sw_su_dp]	
+#
+#	- Looking for new plot types? Check out [https://www.ggplot2-exts.org/], which keeps track of ggplot2 extensions developed by R users.
+#	(They even have a theme that makes your R plots look like Stata graphs, in case you're having withdrawal symptoms)
+
+#	- We didn't cover an increasingly prominent area of data visualisation: graphing spatial data.
+#		o Chapter 7 of Data Visualization: A Practical Introduction demonstrates how to use ggplot for drawing maps [http://socviz.co/maps.html#maps]
+#		o The U.K. Consumer Data Research Centre (CDRC) provides introductory material on using R for working with spatial data [https://data.cdrc.ac.uk/dataset/an-introduction-to-spatial-data-analysis-and-visualisation-in-r]
+
+#	- Data management is the most time consuming (and IMO, difficult) aspect of quantitative data analysis. There are some good (sometimes free) resources
+#	that will help you develop your proficiency in this crucial task:
+#		o R for Data Science [https://r4ds.had.co.nz]
+#		o R Programming for Data Science [https://www.cs.upc.edu/~robert/teaching/estadistica/rprogramming.pdf]
+#		o Data Wrangling with R [https://leanpub.com/datawranglingwithr]
+
+
+################################################## FIN ##################################################
