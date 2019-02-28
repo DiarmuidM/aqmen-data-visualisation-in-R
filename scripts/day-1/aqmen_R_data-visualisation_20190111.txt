@@ -1,3 +1,842 @@
+# 
+# AQMEN (Data Science for Social Research)
+# http://www.aqmen.ac.uk/
+#
+# 
+# Data Visualisation
+# 
+# R Workshop (March 2019)
+# 
+# A three day hands-on workshop led by Dr Diarmuid McDonnell and Professor Vernon Gayle, University of Edinburgh.
+# 
+# 
+# Topics: 
+# 
+# Visualising data is emerging as a key component in effectively communicating research results and evidence. 
+# This three-day workshop will provide a comprehensive introduction for individuals wishing to learn 
+# how to design, produce and interpret data visualisations. 
+#
+#
+# Rationale: 
+# 
+# The Industrial Strategy recognises that a major challenge facing UK businesses and industry is how best to utilise big data 
+# to improve economic performance and increase productivity. A substantial barrier to exploiting the potential offered by 
+# emerging forms of big data is the lack of a suitably trained workforce with appropriate analytical skills. 
+#
+# Many statistical analysis techniques used in the social sciences are also suitable for working with big data in non-academic settings, 
+# however social science graduates often lack experience in applying their skills and knowledge in non-academic research domains.
+#
+#
+# Advice:
+#
+# The workshop is intended for people who have little prior experience of R.
+#
+# The aim of the workshop is to equip you with a proficiency in data visualisation using R as rapidly and painlessly as possible.
+#
+# Therefore, be good to yourself: we explore a multitude of useful data visualisation techniques that often take most of a semester to cover. 
+#
+# It will NOT be possible to learn everthing in three days (drinks on us if you prove us wrong).
+#
+# Please be patient. Computers often go wrong.
+#
+# Please asks the instructors for help.
+#
+# Feel free to work in pairs during the pratical sessions.
+#
+# Not all of your questions will be answered but we will help as much as we can.
+#
+# Good luck.
+#
+##############################################
+
+
+##############################################
+
+# Outline of Activities #
+
+# The workshop is based around a series of activities that involve the use of R for organising and enabling administrative data for statistical analysis:
+
+#	1. Getting Started with R: a quick introduction to the R programming language and various data types [ACT001]
+
+#	2. Wrangling Data for Graphing: how to organise and enable data for visualisation [ACT002]
+
+#	3. The Grammar of Graphics: how to create graphs in a logical and layered manner using ggplot2() [ACT003]
+
+#	4. Graphs in Action: how to construct a multitude of plot types in R [ACT004]
+
+#	5. Refining Graphical Presentations: how to add and tweak the design elements of your plot [ACT005]
+
+#	6. Communicating Analytical Results: how to plot the results of statistical models [ACT006]
+
+#	7. Further Adventures in Graphing: an overview of new plot types, themes and approaches [ACT007]
+
+#	8. Hackathon: two blocks of time where participants will tackle a data visualisation challenge using administrative data [ACT008]
+
+# If you want to jump to a section: press Ctrl + F and search for the activity code e.g. [ACT001].
+
+
+##############################################
+
+
+##############################################
+#
+#
+# We suggest that you make a copy of this file.
+#
+#
+# ##############################################
+# # IT IS IMPORTANT THAT YOU READ THIS HANDOUT #
+# # AND FOLLOW THE R FILE LINE BY LINE! #
+# ##############################################
+# 
+# The file is sequential. It MUST be run line by line. 
+# Many of the commands will NOT run if earlier lines of commands have not been executed.
+#
+# Anotate your new copy of the file as you work through it with your own notes 
+# (use "#" to comment out your notes).
+#
+#
+# Throughout the file there are markers requiring your input:
+#	- TASK: a coding task for you to complete
+#	- QUESTION: a question regarding your interpretation of some code or a plot
+#	- EXERCISE: a data visualisation challenge for you to complete at the end of an activity
+#
+# 
+# ON WITH THE SHOW!
+#
+#
+##############################################
+
+
+##############################################
+
+# 0. Software Demonstration #
+
+# 0.1 System Setup #
+
+# Create a R project folder/directory
+
+# Open RStudio and follow these instructions:
+# 	- File > New Project
+#	- Create project directory
+
+getwd() # tells us the current working directory i.e. workspace
+# setwd("C:/Users/mcdonndz-local/Desktop/temp") # set the working directory to a specified directory; however we have no need to
+# do this as we have already set up a directory to store all of the components of our R project.
+
+folders = c('data_raw', 'data_clean', 'figures', 'temp', 'logs') # create a list with folder names
+for(f in folders) {
+  print(f)
+  dir.create(f)
+} # take a look at the bottom right-hand panel in RStudio (or the directory on your machine) to check if the folders were created
+
+# Creating and saving files:
+data <- file.create("./temp/sampdata.csv")
+write.csv(data, "./temp/sampdata_20190321.csv")
+# Note the use of "." at the beginning of the file path; this signifies that the current working directory
+# should form the first part of the path without needing to be explicitly stated. This is an example of
+# using relative file paths and is considered good practice.
+
+# List all files in our working directory:
+dir() # list all files in a directory
+head(dir(recursive = TRUE)) # list all files in a directory (including its subdirectories); head() restricts the output to the first few results
+dir(pattern = "\\.csv$", recursive = TRUE) # find all files that end in ".csv"
+# The above command used regular expressions to detect patterns in text.
+
+file.info("./data_raw/sampdata.csv") # displays some basic file information 
+# (e.g. size, whether it is a folder, created and modified times)
+
+# That's enough file management for now. There are lots of other tasks we can perform, such as copying, moving, deleting,
+# opening, checking if a file exists etc, that we do not cover here: see [http://theautomatic.net/2018/07/11/manipulate-files-r/]
+
+# TASK: move the files from the workshop Dropbox folder to the "data_raw" directory you just created.
+
+# R functions used in this section:
+
+#	- getwd() - provide working directory location
+#	- c() - create a vector of values or objects
+#	- print() - display information on the console
+#	- file.create() - create a file
+#	- write.csv() - export a csv file to a directory
+#	- dir.create() - create a directory
+#	- dir() - list all files in a directory
+#	- head() - list the first few rows (values) of a data frame (object)
+#	- file.info() - display information about a file
+
+
+# 0.2 Installing Packages #
+
+# The real power of using R for data wrangling and analysis comes from the universe of user-written packages that are available.
+# A package bundles together code, data, documentation, and tests and provides an easy method to share with others.
+
+# Packages represent both a blessing and a curse: a blessing because it is unlikely you won't be able to find a function you need for your analysis;
+# a curse because it adds a bit of administrative burden to your workflow (i.e. find a package, install it, load it, use it). Also,
+# help documentation is wildly inconsistent across packages. 
+
+# A package only needs to be installed once, but you will need to load it in every time you launch an R session.
+
+my_packages <- c("tidyverse", "car", "haven") # create a list of desired packages
+
+install.packages(my_packages, repos = "http://cran.rstudio.com") # install packages from the CRAN repository
+
+installed.packages() # check which packages have been installed
+
+.libPaths() # check which folder the packages are downloaded to
+
+
+# 0.3 Loading Packages #
+
+library(tidyverse) load in the "tidyverse" package of data wrangling functions
+?tidyverse
+vignette("tidyverse")
+
+# A final note about packages: you'll see mention of performing functions or tasks using base R. This means drawing on the functions that come
+# as standard with your version of R. install.packages() and write.csv() are examples of base R functions.
+
+# For the purposes of data wrangling (and most other data analysis tasks, frankly), we will not use base R functions; the reasons will become clear
+# as we progress but it is worth noting that there is more than one way to skin a cat.
+
+# R functions used in this section:
+
+#	- install.packages() - install R packages
+#	- installed.packages() - display installed R packages
+#	- .libPaths() - display directory of installed R packages
+#	- library() - load in R package
+
+##############################################
+
+
+##############################################
+
+
+# 1. Getting Started with R #
+
+# R is a programming language. It has rules, packages, syntax, complexities, idiosyncracies...
+# It is not particularly easy to learn, nevermind master. It can seem as if you have to learn everything in order
+# to do anything!
+
+# Persevere: like any language, once you grasp the building blocks you will begin to feel comfortable. All of the fancy models, code and graphs
+# that make it into journal articles, textbooks, presentations etc are just extensions and flourishes added on top of the basic functions and rules.
+
+# The important thing is to expect failure and react accordingly (just like an astronaut).
+
+
+# 1.1 Comments #
+
+# This is a comment
+## This is also a comment
+###### ...you get the idea
+
+# Comments are an important means of documenting your workflow and ensuring others (including future-you) can reproduce your work.
+
+# In R studio, you can create multiline comments by highlighting the text and pressing Ctr + Shift + C. For example:
+
+This should be a comment and not code.
+Excuse me, did you hear me?
+HELLLOOOO!
+How rude...
+
+
+# 1.2 Writing Code #
+
+print("Hello World!") # display a message to the console
+
+# To execute (i.e. run) the above code, highlight it and press Ctrl + Enter, or the Run icon in the top-left panel in RStudio.
+
+# TASK: print your own personalised message to the console.
+
+
+# 1.3 Data Types #
+
+# Variables are known as 'objects' in R and can store a wide variety of data types:
+# - numeric
+# - string
+# - boolean etc
+
+# Each data type can have different classes i.e. numeric has integer and double (e.g. decimal).
+
+# We assign a value to an object using the "<-" operator. We can also use "=" but this is best avoided as the equals sign has another use
+# and "<-" is considered standard practice in R.
+
+# 1.3.1 Numeric #
+
+x <- 5 # Integer
+y <- 5.5 # Double or Float
+
+# Notice how RStudio doesn't print the value of x or y. To evaluate the assigment you need to call the object:
+x
+y
+
+# Assign and evaluate in a single command:
+(x <- 5)
+# Our advice is to keep assignment and evaluation commands separate (those parentheses can add confusion and lead to errors) but the choice is yours...
+
+print(x + y) # print ensures the result is displayed in the console or output window
+
+# We can compare objects using a set of comparison operators:
+x == y
+x < y
+x > y
+x != y
+x >= y
+x <= y
+# TASK: document what each of the comparison operators does.
+
+a <- c(1, 4, 9, 12)
+b <- c(4, 4, 9, 13)
+a == b # compares each number in the vector to its corresponding number in the other vector
+
+# Note that logical values TRUE and FALSE equate to 1 and 0 respectively, allowing us to perform arithmetic operations using these results:
+sum(a == b) # 2 instances where the elements of the vector are equal
+
+# To test if two objects are exactly equal:
+identical(x, y)
+
+print(typeof(x))
+print(typeof(y)) # R stores numbers as a double by default; we need to be specific when assigning the object's value(s):
+
+rm("x") # remove the objects from R
+rm("y") # check the environment pane in the top-right hand corner of RStudio to see what objects remain in the global environment
+
+x <- 5L # rather counterintuitively given that it's a letter, the "L" suffix ensures a number is stored as an integer
+y <- 5.5
+print(typeof(x)) # Now it is stored explicitly as an integer; in practice you often do not need to worry about this
+print(typeof(y)) 
+
+# Another approach is to convert an existing object:
+int_var <- 20
+int_var <- as.integer(int_var)
+print(typeof(int_var))
+
+# Vectors
+
+vec <- 1:10
+print(vec) # creates a vector from 1 to 10; a vector is a list of values stored in a single object
+vec[1] # return the first element in vec
+vec[1:5] # return the first five elements in vec
+vec[-2] # return the values of the vector, excluding the second element
+vec[-1:-5]
+# TASK: describe the results of "vec[-1:-5]".
+
+# The above commands are known as 'slicing' i.e. accessing a particular element(s) in a vector.
+
+# You can also store objects as a vector:
+ovec <- c(x, y) # combine the objects "x" and "y" in a vector called "ovec"
+ovec
+
+# You can count the number of elements in a vector:
+length(vec)
+
+# You can also drop elements:
+vec <- vec[-2] # note that we overwrite the existing object; we could just as easily assign a new object to preserve the original
+vec2 <- vec[-(4:6)] # drop 4-6 from the vector
+
+# We can perform calculations with vectors:
+a <- c(1, 2, 3, 4, 5)
+b <- c(6, 7, 8, 9, 10)
+c <- c(1, 2, 3)
+
+a + b # adds each element of the vectors together in order (i.e. 1 + 6, 2 + 7 etc)
+# This is known as vectorization and is a very useful property of R.
+
+a + c # generates a warning that the vectors are not multiples of each other (i.e. one has 5 elements, the other 4)
+# When vectors are of unequal length, the shorter vector is "recycled" i.e. goes back to the start.
+
+# Generate a sequence of numbers
+
+sequence <- seq(from = 1, to = 100, by = 5)
+print(sequence) 
+# TASK: describe what the seq() function is doing above.
+# TASK: create a sequence of numbers that starts at 55, ends at 7000, and increases by 55 each time.
+
+# Create a sequence based on repeating or replicating the numbers
+repetition <- rep(1:10, each = 10)
+print(repetition)
+
+# Generating sequences of random numbers
+
+# This is a useful function for performing simulations or generating data for testing ideas and techniques
+
+# Generate 100 random numbers between 0 and 25 from a uniform distribution i.e. each number has an equal probability of being selected
+runif(100, min = 0, max = 25)
+
+# Generate 100 random numbers between 0 and 25 (with replacement)
+sample(0:25, 100, replace = TRUE)
+
+# Generate 100 random numbers between 0 and 25 (without replacement)
+sample(0:25, 100, replace = FALSE)
+
+# QUESTION: why can we not sample 100 numbers from this range without replacement?
+
+# Generate 1000 random numbers from a normal distribution with given mean and standard deviation
+normdist <- rnorm(1000, mean = 0, sd = 1)
+hist(normdist) # approximately normal 
+print(summary(normdist))
+
+# Generate CDF probabilities for value(s) in vector q
+pnorm(0.5, mean = 0, sd = 1)
+
+# Generate quantile for probabilities in vector p
+qnorm(0.5, mean = 0, sd = 1)
+
+# Generate density function probabilites for value(s) in vector x
+dnorm(0.5, mean = 0, sd = 1)
+
+# Generate a vector of length n displaying the number of successes from a trial of size = 100 with a probabilty of success = 0.5
+rbinom(10, size = 100, prob = 0.5)
+# QUESTION: how many successes were there in 10 trials, each with a sample size of 100?
+
+# Generate a vector of length n displaying the random number of events occuring when lambda (mean count) equals 4.
+rpois(20, lambda = 4)
+# TASK: vary the number of expected events and interpret the results.
+
+# We can reproduce random numbers by setting the seed:
+set.seed(1) # name the random sample "1"
+rsamp1 <- rnorm(n = 10, mean = 0, sd = 1)
+set.seed(1)
+rsamp2 <- rnorm(n = 10, mean = 0, sd = 1)
+print(rsamp1)
+print(rsamp2) # produces the same values in each random sample
+
+# Rounding numbers
+
+x <- c(1, 1.35, 1.7, 2.05, 2.4, 2.75, 3.1, 3.45, 3.8, 4.15, 4.5, 4.85, 5.2, 5.55, 5.9)
+print(x)
+
+# Round to the nearest integer
+round(x) # note how the original object is not altered - run the command "print(x)" to check
+
+# Round up
+ceiling(x)
+
+# Round down
+floor(x)
+
+# Round to a specified decimal
+round(x, digits = 1)
+
+
+# 1.3.2 Strings #
+
+# Strings (text) are stored in the character class in R.
+
+a <- "learning to create" # create string a
+b <- "character strings" # create string b
+paste(a, b) # combine the strings
+
+# Paste character and number strings (converts numbers to character class)
+paste("The life of", pi)
+
+# Paste multiple strings
+paste("I", "love", "R")
+
+# Paste multiple strings with a separating character
+paste("I", "love", "R", sep = "-")
+
+# Converting to strings
+
+a <- "The life of"
+b <- pi
+is.character(b) # check if b is a string
+c <- as.character(b)
+is.character(c)
+
+# Printing strings
+
+print(a)
+print(a, quote = FALSE) # easier to use the command "noquote(a)"
+noquote(a)
+
+cat(a)
+cat(a, "Riley") # the cat function is useful for printing multiple objects in a readable format
+cat(letters)
+
+x <- "Today I am learning how to print strings."
+y <- "Tomorrow I plan to learn about something else."
+z <- "The day after that I will take a break and drink a beer."
+cat(x, y, z, fill = 1) # the fill option specifies line width
+
+# Substituting strings and numbers
+
+x <- "The R package is great"
+sprintf("You know what? %s", x) # think of "%s" as a placeholder for a string stored in an object
+TASK: call the help documentation for the "sprintf()" function.
+
+y <- 0
+sprintf("You know what? I had %d beers last night", y)
+sprintf("Here are some digits from Pi: %f", pi) # "%f" is a placeholder for a number stored in an object
+
+# Counting string elements and characters
+
+length("How many elements are in this string?")
+length(c("How", "many", "elements", "are", "in", "this", "string?"))
+
+nchar("How many characters are in this string?")
+nchar(c("How", "many", "characters", "are", "in", "this", "string?"))
+# Counting elements and characters becomes very useful when constructing loops.
+
+# Special characters
+
+string2 <- 'If I want to include a "quote" inside a string, I use single quotes'
+string3 <- "\""
+string4 <- "\'" # if we want to include a single or double quote in our string we use the backslash (\) to escape the character
+TASK: include a backslash in a string.
+
+x <- c("\"", "\\")
+x
+writeLines(x) # beware that the printed representation of a string is different from the contents of the string itself
+# Special characters are very useful in R but they can throw a spanner in the works; we'll deal more with them later in the workshop.
+
+# String manipulation with stringr
+
+# We can perform a lot of the core string manipulation tasks (e.g. removing whitespace, converting to lowercase etc)
+# using base R functions. However we will use a package that simplifies the syntax: stringr
+
+help("stringr")
+
+# All functions in stringr start with str_ and take a vector of strings as the first argument:
+
+x <- "Hello, this is a run-of-the-mill string."
+str_length(x)
+str_c(x, " ", "Not very interesting at all.") # combine strings
+str_sub(x, 1, 10) 
+# QUESTION: what is the str_sub function doing to the string?
+
+y <- c("Hello", "This", "is a bog standard", "string")
+str_subset(y, "[aeiou]") # returns strings matching the pattern i.e. contain a vowel
+str_subset(y, "[qrstuvwxyz]")
+
+# Change text to upper, lower or title case
+uc <- "DOWN WITH THAT SORT OF THING"
+lc <- "careful now"
+str_to_upper(lc)
+str_to_lower(uc)
+str_to_title(uc) 
+# QUESTION: what tv show are those strings referencing an iconic moment from?
+
+# String matching
+
+str_detect(y, "[aeiou]") # tells you if there’s any match to the pattern
+str_count(y, "[aeiou]") # counts how many vowels are in each string
+str_locate(y, "[aeiou]") # gives the position of the first match
+str_extract(y, "[aeiou]") # extracts the text of the first match
+str_match(y, "(.)[aeiou](.)") # extract the characters on either side of the vowel
+str_replace(y, "[aeiou]", "?") # replace first match with a specified character
+str_split(x, "") # split a string into individual characters based on a specified separator
+str_dup(x, times = 10) # duplicates the string n times
+
+# Removing leading and trailing whitespace
+
+text <- c("Text ", " with", " whitespace ", " on", "both ", " sides ")
+print(text)
+
+# Remove whitespaces on both sides
+str_trim(text, side = "both") # other options include "right" and "left"
+str_pad("beer", width = 10, side = "left") # add whitespace on the left of the string
+
+# Set operations for strings
+
+set_1 <- c("lagunitas", "bells", "dogfish", "summit", "odell")
+set_2 <- c("sierra", "bells", "harpoon", "lagunitas", "founders")
+union(set_1, set_2) # list all individual elements from the sets
+intersect(set_1, set_2) # list all common elements from the sets
+setdiff(set_1, set_2) # returns elements in set_1 not in set_2; swap order of sets
+
+# To test if two vectors contain the same elements regardless of order use setequal():
+
+set_3 <- c("woody", "buzz", "rex")
+set_4 <- c("woody", "andy", "buzz")
+set_5 <- c("andy", "buzz", "woody")
+setequal(set_3, set_4)
+
+set_6 <- c("woody", "andy", "buzz")
+identical(set_4, set_6) # check if sets are exactly equal (elements and order)
+
+# Identifying if element is in string
+good <- "andy"
+bad <- "sid"
+is.element(good, set_5) # is the word "andy" in set_5?
+good %in% set_5 # same as above
+# TASK: see if the word "sid" is in set_3.
+
+# Sort a string
+sort(set_5)
+sort(set_5, decreasing = TRUE)
+
+# That's enough of strings. The information they contain can be of considerable interest for quantitative data analyses and it is worth
+# beginning familiar with their storage and manipulation in advance of more sophisticated analyses (e.g. Natural Language Processing).
+
+
+# 1.3.3 Categorical Variables #
+
+# Known as factor variables in R (and other packages like Stata etc), 
+# they group observations into exhaustive and mutually exclusive categories.
+# We'll use the forcats package to work with categorical variables in R:
+library(forcats) # not part of the core tidyverse package so we need to load it in separately
+
+# Create a factor
+
+x <- c("male", "female", "female", "male", "female") # list of observations for biological sex
+sex <- factor(x)
+sex
+# QUESTION: how many observations and levels are there for this factor variable?
+
+class(sex) # confirm it is a factor variable
+unclass(sex) # show the underlying values of this variable: female = 1, male = 2 (numeric values are attached to categories alphabetically by default);
+
+# We can change the order in which numbers are attached to categories by specifying the "levels" option:
+sex2 <- factor(x, levels = c("male", "female"))
+levels(sex2)  # display the levels (i.e. categories) of this variable
+summary(sex2) # summarise the variable i.e. frequency count
+
+# We can convert an existing list of strings to a factor variable:
+group <- c("Group1", "Group2", "Group2", "Group1", "Group1")
+group2 <- factor(group)
+levels(group2)
+
+# Instead of numbering categories alphabetically, we can do so according to when a factor first appears:
+las <- c("Glasgow", "Edinburgh", "Aberdeen", "Glasgow", "Orkney", "Edinburgh")
+cat_las <- factor(las, unique(las))
+attributes(cat_las)
+unclass(cat_las)
+
+# Ordering factor variables
+ses <- c("low", "middle", "low", "low", "low", "low", "middle", "low", "middle",
+         "middle", "middle", "middle", "middle", "high", "high", "low", "middle",
+         "middle", "low", "high")
+ses <- factor(ses, levels = c("low", "middle", "high"), ordered = TRUE)
+print(ses) # categories are ordered from "low" to "high"
+factor(ses, levels = rev(levels(ses))) # you can also reverse the order of levels if desired
+
+# Recoding categorical variables
+
+# The "plyr" package is useful for this task:
+new_ses <- plyr::revalue(ses, c("low" = "small", "middle" = "medium", "high" = "large"))
+print(new_ses)
+levels(new_ses)
+# Note that using the :: notation allows you to access the revalue() function without having to fully load in the plyr package.
+# There are other ways of recoding categorical variables, none of which (in my opinion) are as easy as Stata's approach.
+
+# Dropping categories with no observations
+
+ses_2 <- ses[ses != "middle"] # create a new variable where ses does not equal the value "middle"
+summary(ses_2)
+droplevels(ses_2)
+
+
+# 1.4 Saving Files #
+
+# I need to figure this out in the context of creating R project files.
+
+
+# 1.5 Getting Help #
+
+help.start() # provides general help links
+help.search("regression") # searches the help system for documentation matching a given character string
+
+help("strtrim") # finds help documentation on the "strtrim" function
+?strtrim # another way of searching for help
+example("strtrim") # display example code using this function
+# In RStudio, you can also highlight the function in your code and press F1.
+
+help(mean) # let's dissect the help material for the mean() function
+vignette("dplyr") # some of the better-documented packages provide detailed examples of how to use its functions
+
+# Can't quite remember the name of an object or function?
+apropos("sum") # returns all objects in the global environment that contain the text "sum"
+
+# If you need help from the web then [insert chosen search engine] is your friend.
+# Likewise, the Stackoverflow website is an excellent source of help on many programming languages and data wrangling/analysis problems.
+# If you experience an error message then follow the above advice by searching for the exact message you receive i.e. don't paraphrase
+# your issue.
+
+
+# 1.6 Keyboard Shortcuts #
+
+# To execute R code: highlight the syntax and press Ctrl + Enter.
+
+# To execute the entire R script (i.e. all of the code in one): press Ctrl + Shift + S.
+
+# To insert the assignment operator (i.e '<-'): press Alt + minus key (-).
+
+# To autocomplete your syntax: start typing the name of an object/function and press TAB.
+
+# To insert the pipe operator (%>%): press Ctrl + Shift + M.
+
+
+# 1.7 Troubleshooting #
+
+# If you run some code and nothing happens, check the console (bottom-left pane in RStudio): if you see a plus sign (+) then
+# R thinks you haven't finished writing the command and expects more code. If this happens then press the ESC key to cancel the
+# command.
+
+# R is case sensitive e.g. 'View(data)' displays the data set in a window (similar to the 'browse' function in Stata);
+# 'view(data)' does nothing.
+
+
+# 1.8 Debugging #
+
+# This is the computer science term for dealing with code issues. R likes to tell you when something is not quite right,
+and not always in an intelligble manner. As progress with this workshop, you are likely to encounter the following results:
+#	- message: R is communicating a diagnostic message relating to your code; your commands still execute.
+#	- warning: R is highlighting an error/issue with your code, your commands still execute but the warnings need addressing.
+#	- error: R is telling you there has been a fatal error with your code; your commands do not execute.
+
+# Let's look at a simple example:
+log(-1) # take the natural log of -1
+# This warning tells you that the output is missing i.e. there is no natural log of a negative number.
+warning() # displays the warnings associated with the most recently executed block of code
+
+# You'll encounter plenty of messages, warnings and errors over the course of this workshop. For now, here is some general
+# advice from Peng (2015) regarding what questions to ask when debugging:
+#	- What was your input? How did you call the function?
+#	- What were you expecting? Output, messages, other results?
+#	- What did you get?
+#	- How does what you get differ from what you were expecting?
+#	- Were your expectations correct in the first place?
+#	- Can you reproduce the problem (exactly)?
+
+
+# 1.9 Environment Objects #
+
+# We can remove some of the objects we've created (i.e. delete variables):
+ls() # list existing objects
+
+a <- "I am a useless object"
+rm("a") # delete the object "a"
+
+exists("x") # check if the object "x" exists
+rm(c("x", "y")) # you can remove multiple objects by using the "c()" function
+
+history(Inf) # displays all of the commands executed in this R session
+
+
+# 1.10 Workspace Options #
+
+help(options)
+options() # wide range of options for displaying results etc
+options(digits=3) # change a specific option (i.e. number of digits to print on output)
+options(max.print = 9999) # set maxmimum number of rows to print to the console as 9999
+
+
+# 1.11 Data Visualisation Examples #
+
+# Congratulations on getting through the technical (boring) bit of the activity. To whet your appetite, here are
+# some examples of the techniques you will learn over the course of the workshop.
+
+# Import data #
+
+library(readr)
+
+auto <- read_csv("./data_raw/auto.csv") # the (in)famous auto data set from Stata
+str(auto)
+auto
+
+# Some simple graphs #
+
+# DMD TASK: ADD PLOTS FOR EACH COMBINATION OF VARIABLE TYPES E.G. CONTINUOUS BY CATEGORICAL (BOXPLOT), CAT BY CAT ETC
+
+# A simple box graph
+
+str(auto$price)
+sum(is.na(auto$price)) # no missing values
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_boxplot(mapping = aes(x = "", y = auto$price)) # single boxplot (no x axis)
+ggplot(data = auto) + geom_boxplot(mapping = aes(x = auto$foreign, y = auto$price)) # two boxplots
+
+
+# A simple pie chart
+
+# Pie charts are tricky to produce in R and with ggplot2, and thus are not recommended
+# when a bar chart would suffice.
+
+
+# A simple bar chart
+
+class(auto$foreign) # stored as character data type - we want this to be a factor (categorical) variable
+auto$foreign <- as.factor(auto$foreign) # coerce the foreign variable to be factor data type
+levels(auto$foreign)
+factor(auto$foreign) # that's more like it
+unclass(auto$foreign) # Domestic = 1; Foreign = 2
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_bar(mapping = aes(auto$foreign)) 
+
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$foreign)) # add colour to the bars based on categories of foreign
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78)) # add colour to the bars based on categories of rep78; the result is a stacked bar chart
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "fill") # stacked bars of same height
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "dodge") # place bars side-by-side
+
+
+# A simple histogram
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg)) # narrows bins result in gaps
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4)
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4, fill = "red") # add colour to the graph
+
+# Histogram diassgregated by a second variable:
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4)
+# Note how we moved the fill option inside the aes() function.
+
+# Density plot
+ggplot(data = auto) + geom_density(mapping = aes(auto$mpg, fill = auto$foreign))
+
+
+# A simple dot chart
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_dotplot(mapping = aes(x = auto$price))
+
+
+# A simple count plot
+
+ggplot(data = diamonds) +
+  geom_count(mapping = aes(x = cut, y = color)) # a count plot is a good way of visualing the relationship between two categorical variables
+# QUESTION: what are the most common combinations of diamond colour and quality?
+
+
+# A simple scatterplot
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg))
+# QUESTION: what is the association between miles per gallon and the price of a car?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, color = foreign))
+# QUESTION: what is the effect of specifying the color option in the aes() function?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, size = foreign))
+# QUESTION: is a categorical variable a good choice for mapping to the size aesthetic?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, alpha = foreign))
+
+ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = foreign))
+ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = foreign, color = foreign))
+# Note how we can combine different shapes and colours in a single plot.
+
+# We've introduced a number of different aesthetic options in the above graphs:
+#	- color
+#	- shape
+# 	- size
+#	- alpha
+
+# Keep these in mind as we progress, we'll also introduce other options that alter the display of the plots.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Data Visualisation in R #
 # Derived from Fogarty (2018) and Healy (2019)
 
