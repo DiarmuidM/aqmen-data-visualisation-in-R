@@ -186,7 +186,7 @@ installed.packages() # check which packages have been installed
 
 # 0.3 Loading Packages #
 
-library(tidyverse) load in the "tidyverse" package of data wrangling functions
+library(tidyverse) # load in the "tidyverse" package of data wrangling functions
 ?tidyverse
 vignette("tidyverse")
 
