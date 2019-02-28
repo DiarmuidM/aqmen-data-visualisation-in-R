@@ -41,6 +41,9 @@ _A collection of posters and short guides to choosing the most appropriate visua
 
 #### Useful blogs
 
+R bloggers. [https://www.r-bloggers.com/](https://www.r-bloggers.com/) <br>
+_R news and tutorials submitted by a community of R users._
+
 Flowing Data. [https://flowingdata.com/](https://flowingdata.com/) <br>
 _Interesting community and suite of resources focusing on data visualisation issues._
 
