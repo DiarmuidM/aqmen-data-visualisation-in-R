@@ -26,6 +26,12 @@ _A thorough handbook for conducting data wrangling, visualisation and analysis i
 
 ### Online Resources:
 
+#### Reproducible Research
+
+Gayle, V.J. (2017) An introduction to Jupyter Notebooks for Social Science Research. NCRM Online Resources. NCRM.
+[https://www.youtube.com/watch?v=Os3s1jwLAEI](https://www.youtube.com/watch?v=Os3s1jwLAEI) <br>
+_An overview of how to interleave code, results and narrative information in a single, reproducible document._
+
 #### Courses
 
 Data Visualization with ggplot2. [https://www.datacamp.com/courses/data-visualization-with-ggplot2-1](https://www.datacamp.com/courses/data-visualization-with-ggplot2-1) <br>
