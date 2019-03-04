@@ -1539,17 +1539,18 @@ p + geom_histogram(bins = 10)
 
 
 
-# 6. Communicating Analytical Results #
+# 6. Communicating Analytical Results [ACT006] #
 
 # In this section we employ our graphing skills and techniques to the results of statistical models.
+
 # We can do this is two ways:
-# - employ modelling techniques as part of the plotting process i.e. directly within geoms;
-# - use specialist packages to capture the results of statistical models and pass them to the plot.
+# 1. employ modelling techniques as part of the plotting process i.e. directly within geoms.
+# 2. use specialist packages to capture the results of statistical models and pass them to the plot.
 
-# 6.1 Creating models within plots
 
-# We saw earlier in the workshop an example of this approach: using geom_smooth() to 
-# display a line of best of fit on a scatterplot.
+# 6.1 Estimating Models Within Plots
+
+# We saw earlier in the workshop an example of this approach: using geom_smooth() to  display a line of best of fit on a scatterplot.
 
 library(gapminder)
 library(ggplot2)
@@ -1569,6 +1570,7 @@ p + geom_point(alpha=0.1) +
 # do you think fits the data better?
 
 # 6.1.1 Fit multiple models on a single graph
+
 # This is easily achieved by stacking multiple geom_smooth() functions:
 p + geom_point(alpha=0.1) +
   geom_smooth(color = "steelblue", fill="steelblue", method = "lm") +
@@ -1580,16 +1582,19 @@ p + geom_point(alpha=0.1) +
 # of a single variable.
 
 # First, load in some color palettes
+
 model_colors <- RColorBrewer::brewer.pal(3, "Set1")
 model_colors 
 
 # Second, adjust the geom_smooth() color and fill specifications
+
 p1 <- p + geom_point(alpha=0.1) +
   geom_smooth(aes(color = "OLS", fill = "OLS"), method = "lm") +
   geom_smooth(aes(color = "Poly", fill = "Poly"), method = "lm", size = 1.2, 
               formula = y ~ splines::bs(x, 3), se = FALSE)
 
 # Third, map the color palette to each geom_smooth()
+
 p2 <- p1 + scale_color_manual(name = "Models", values = model_colors) +
   scale_fill_manual(name = "Models", values = model_colors) +
   theme(legend.position = "top")
@@ -1597,19 +1602,25 @@ p2 <- p1 + scale_color_manual(name = "Models", values = model_colors) +
 x11()
 p2
 
+# EXERCISE:
+# 1. Load in "extract_financial.csv".
+# 2. Graph the association between income and expenditure.
+# 3. Plot linear and polynomial lines of best fit to the plot.
+# 4. State which line seems a better fit for the data. 
 
-# 6.2 Saving and graphing model results
 
-# In this section we demonstrate how to store and plot the results of three types of statistical models:
-# - multiple regression (OLS)
-# - logistic regression (binomial)
-# - count regression (Poisson)
+# 6.2 Saving and Graphing Model Results
 
-# There are a plethora of other models that can be estimated in R which we cannot cover here.
-# If you are interested in learning more, you can access the materials from our Predictive Analytics
-# course (ADD LINK!); we also recommend Gelman and Hill (2018), Data Analysis Using Regression and Multilevel/Hierarchical Models.
+# In this section we demonstrate how to store and plot the results of a multiple linear regression (OLS) statistical model.
+
+# The techniques demonstrated below also apply to other types of statistical models e.g. logisitic, count regression etc.
+
+# If you are interested in learning more about modelling in R, you can access the materials from our Predictive Analytics
+# course [https://github.com/DiarmuidM/aqmen-predictive-analytics-in-R]; 
+# we also recommend Gelman and Hill (2018), Data Analysis Using Regression and Multilevel/Hierarchical Models.
 
 # 6.2.1 How model results are stored
+
 # The good news: model results, just like tables, graphs, data frames etc, are stored as objects in R;
 # the bad news is they have a slightly more complicated structure...
 
@@ -1635,10 +1646,14 @@ out$df.residual # degrees of freedom
 # 2. Communicate model uncertainty
 # 3. Show the underlying data where possible
 
-# 6.3. Graphing statistical models
+
+# 6.3. Graphing Statistical Models
+
 # We will make use of David Robinson's 'broom' package to help us extract model results
 # and graph them with ggplot2.
 
+library(lubridate)
+library(car)
 library(broom)
 ?broom
 vignette("broom")
@@ -1647,67 +1662,139 @@ vignette("broom")
 # - observation-level i.e. fitted values for each observation in the data
 # - model-level i.e. model summary statistics (e.g. R-squared, F test)
 
-# 6.3.1 Component-level statistics
 
-library(socviz)
-mod_comp <- tidy(out, conf.int = TRUE)
-mod_comp %>% round_df()
+# 6.3.1 Estimate OLS model
 
-p <- ggplot(mod_comp, mapping = aes(x = term,
-                                    y = estimate))
+# RQ: What factors predict a charity's income?
+# Data: Scottish Charity Register, which is an open data set provided by the regulator for Scotland (OSCR)
+# Why is it of interest?: long-standing policy concern about big charities and their dominance of the sector (see Backus & Clifford, 2013)
 
-p + geom_point() + coord_flip() # produces a Cleveland plot of the model point estimates'
-# not bad but we can refine the graph further:
+# We'll brush past most of the intensive data wrangling work that is a neccessary precursor to estimating models.
 
-mod_comp <- subset(mod_comp, term %nin% "(Intercept)") # remove the intercept from the model table
-mod_comp$term <- prefix_strip(mod_comp$term, "continent") # remove the 'continent' prefix from the values of 'term'
+# Import the data
 
-p <- ggplot(mod_comp, mapping = aes(x = reorder(term, estimate),
-                                    y = estimate, ymin = conf.low, ymax = conf.high))
+scot_char <- read_csv("./data_raw/oscr_scr_20190226.csv") # import the csv into R
+scot_char # get a basic summary of the "scot_char" object
 
-p + geom_pointrange() + coord_flip()
+# Keep relevant variables
+
+scot_char_subset <- select(scot_char, `Charity Number`, `Registered Date`, `Charity Status`, `Constitutional Form`,
+                           `Parent charity number`, `Most recent year expenditure`, `Geographical Spread`, 
+                           `Most recent year income`)
+scot_char_subset
+# Note how we needed to enclose the variable names in backticks ("``"). This is because R and other languages have trouble
+# parsing variables or objects with spaces in their names. We'll rename the variables in the next block of code.
+
+# Rename variables
+
+scot_char_subset <- rename(scot_char_subset, charnum = `Charity Number`, inc = `Most recent year income`, exp = `Most recent year expenditure`,
+                           regd = `Registered Date`, charstatus = `Charity Status`, lform = `Constitutional Form`,
+                           aoo = `Geographical Spread`, pchar = `Parent charity number`)
+scot_char_subset
+# The first argument of rename() takes an object or data frame, and then a list of variables to rename.
+
+# Check values of variables
+
+scot_char_subset$lform <- factor(scot_char_subset$lform)
+scot_char_subset$lform <- relevel(as.factor(scot_char_subset$lform), ref = 10) # set the reference category to Unincorporated associations
+
+scot_char_subset$charstatus <- factor(scot_char_subset$charstatus)
+
+scot_char_subset$aoo <- as.factor(scot_char_subset$aoo)
+scot_char_subset$aoo_r <- factor(recode(as.integer(scot_char_subset$aoo),"c(1,8)=1; c(2,3)=2; c(4,6)=3; c(5,7)=4")) # recode values of this variable to produce local, regional, national and overseas categories
+table(scot_char_subset$aoo_r)
+
+# Drop inactive charities
+
+scot_char_analysis <- scot_char_subset %>%
+  filter(charstatus == "Active") # keep all observations where charity status is "Active"
+
+# Drop charities with zero income
+
+scot_char_analysis <- scot_char_subset %>%
+  filter(inc > 0)
+
+# Create measure of charity age
+
+scot_char_analysis$regy <- year(scot_char_analysis$regd) # extract year from date
+scot_char_analysis$charage <- 2019 - scot_char_analysis$regy # calculate age
+
+# Natural log of income
+
+scot_char_analysis$linc <- log(scot_char_analysis$inc)
+
+# Estimate a multivariate linear regression
+
+# We'll specify the following model: estimate income as a function of a charity's legal form (categorical), 
+# its area of operation (categorical), and its organisational age (metric).
+
+mod1 <- lm(formula = linc ~ charage + lform + aoo_r,
+           data = scot_char_analysis) # regress income on legal form, area of operation, and age
+summary(mod1)
+
+# OK, now we are ready to graph the results of the model:
+
+# 6.3.1.1 Component-level statistics
+
+mod1_com <- tidy(mod1, conf.int = TRUE) # use `broom`'s tidy() function to extract model coefficient information
+mod1_com # now we have a summary table of regression coefficients from our model; let's do some further tidying up before graphing
+
+mod1_com <- filter(mod1_com, term != "(Intercept)") # remove the intercept from the model table
+mod1_com$term <- str_replace(mod1_com$term, "lform", "") # remove the 'lform' prefix from the values of 'term'
+mod1_com$term <- str_replace(mod1_com$term, "aoo_r2", "Regional")
+mod1_com$term <- str_replace(mod1_com$term, "aoo_r3", "National")
+mod1_com$term <- str_replace(mod1_com$term, "aoo_r4", "Overseas") # replace with the proper names of the categories
+
+# Plot the results of the regression
+
+p <- ggplot(mod1_com, mapping = aes(x = reorder(term, estimate), y = estimate, ymin = conf.low, ymax = conf.high))
+
+x11()
+p + geom_pointrange() + 
+  coord_flip() +
+  geom_hline(yintercept = 0, size = 1, color = "red")
 
 # TASK: describe what each component of the above plot is doing.
+
 # TASK: add informative labels to the above graph, and change the size and color of the points.
 
-# 6.3.2 Observation-level statistics
 
-mod_obs <- augment(out)
-View(mod_obs)
-str(mod_obs)
-# TASK: describe the variables/attributes of the mod_obs object e.g. what do you think 'fitted' represents?
-# HINT: look at the help and vignette files for broom.
+# 6.3.1.2 Observation-level statistics
 
-# Note how the augment() function only included variables from the original data set that were
-# included in the model; we can override this default specification: 
-mod_obs2 <- augment(out, data = gapminder)
-View(mod_obs2)
-str(mod_obs2)
+# We can calculate and plot predicted outcomes for individuals and groups in our data:
+mod1_obs <- augment(mod1, data = scot_char_analysis) # augment collects observation-level model results (e.g. predicted outcomes)
+View(mod1_obs)
+
 # augment() returns the following additional variables (Healy, 2019):
-# .fitted — The fitted values of the model.
-# .se.fit — The standard errors of the fitted values.
-# .resid — The residuals.
-# .hat — The diagonal of the hat matrix.
-# .sigma — An estimate of residual standard deviation when the corresponding observation is dropped from the model.
-# .cooksd — Cook’s distance, a common regression diagnostic; and
-# .std.resid — The standardized residuals.
-
+# .fitted — The fitted values of the model
+# .se.fit — The standard errors of the fitted values
+# .resid — The residuals
+# .hat — The diagonal of the hat matrix
+# .sigma — An estimate of residual standard deviation when the corresponding observation is dropped from the model
+# .cooksd — Cook’s distance, a common regression diagnostic
+# .std.resid — The standardized residuals
 
 # We can now graph the observation-level results of the model:
-p <- ggplot(data = mod_obs,
+p <- ggplot(data = mod1_obs,
             mapping = aes(x = .fitted, y = .std.resid))
+
 p + geom_point()
 
 # QUESTION: do you think a basic OLS is a good fit for the data: whay or why not?
-# TASK: graph predicted values of the outcome against other variables in the mod_obs table.
+
+# TASK: graph predicted values of the outcome against other variables in the mod1_obs table (e.g. charity age, linc).
 
 
-# 6.3.3 Model-level statistics
+# 6.3.1.3 Model-level statistics
 
-glance(out) # produces a table of model summary statistics
+glance(mod1) # produces a table of model summary statistics
 
 # This doesn't look immediately useful - why would we want to graph the summary statistics for one model?
 # However, the utility of glance() is evident when estimating and comparing multiple models.
+
+# To illustrate the power of glance(), let's switch back to the gapminder data set.
+
+library(socviz) # load in the socviz package
 
 # For example, let's estimate a model on observations relating to European countries in 1977:
 eu77 <- gapminder %>% filter(continent == "Europe", year == 1977)
@@ -1725,7 +1812,9 @@ subsamp <- gapminder %>%
   nest()
 
 subsamp
+
 # QUESTION: what do you think the values of the variable 'data' represent?
+
 # TASK: explore the values and class of 'data' variable.
 
 # We can also work backwards i.e. unnest the data set:
@@ -1734,7 +1823,9 @@ subsamp %>%
   unnest()
 
 # O.K. we're almost ready to estimate and graph multiple models
-# First, create a function for estimating linear regressions:
+
+# First, create a function for estimating a simple linear regression (one predictor):
+
 fit_ols <- function(df) {
   lm(lifeExp ~ log(gdpPercap), data = df)
 }
@@ -1743,6 +1834,7 @@ fit_ols <- function(df) {
 # to identify the data underpinning the model.
 
 # Second, we map the regression function to each row in the data column:
+
 regout <- gapminder %>%
   group_by(continent, year) %>%
   nest() %>%
@@ -1755,8 +1847,9 @@ regout <- gapminder %>%
 #   e.g. Europe 1977 is made up of individual observations for multiple countries
 # 4. We create a new list variable called model that stores the results of the regression commands
 
-regout
+View(regout)
 regout$model
+
 # QUESTION: how many regression commands were executed?
 
 # Finally, we can extend our piping command to extract model summary statistics:
@@ -1770,14 +1863,15 @@ regsum <- gapminder %>%
 
 regsum
 summary(regsum)
+
 # TASK: describe the additional commands we have included in the above code i.e. from the second mutate command to the end.
 
-# Phew! Lot of clever work has gone into getting some model summary statistics ready for the fun part: plotting :)
+# Phew! A lot of clever work has gone into getting some model summary statistics ready for the fun part: plotting :)
 
 p <- ggplot(data = regsum, mapping = aes(x = year, y = estimate,
-  ymin = estimate - 2*std.error,
-  ymax = estimate + 2*std.error,
-  group = continent, color = continent))
+                                         ymin = estimate - 2*std.error,
+                                         ymax = estimate + 2*std.error,
+                                         group = continent, color = continent))
 
 x11()
 p + geom_pointrange(position = position_dodge(width = 1)) +
@@ -1785,45 +1879,42 @@ p + geom_pointrange(position = position_dodge(width = 1)) +
   theme(legend.position = "top") +
   labs(x = "Year", y = "Estimate", color = "Continent")
 
-# QUESTION: how would you characterise the effect of GDP on life expectancy,
-# over time and across continents?
+# QUESTION: how would you characterise the effect of GDP on life expectancy, over time and across continents?
 
-# 6.3.4 Graphing logistic model results
-
-library(margins)
-
-gss_sm$polviews_m <- relevel(gss_sm$polviews, ref = "Moderate")
-
-out_bo <- glm(obama ~ polviews_m + sex*race,
-              family = "binomial", data = gss_sm)
-summary(out_bo)
-
-bo_m <- margins(out_bo)
-summary(bo_m)
-plot(bo_m)
-
-##
-  # Come back to this section with different data (maybe charity admin data?)
-##
 
 # As you can probably surmise, graphing the results of statistical models is tricky, in as much
 # as the plotting elements are fairly standard but you must have a good grasp of the 
 # purpose, mechanics and results of the model being estimated. 
 
-# ggplot() is not your only option and we encourage to explore the use of base R plots
-# and the coefplot library.
-
-# There are additional issues we were unable to cover, such as graphing estimates from 
-# complex surveys, and we refer you to chapter 6 of Healy (2019) and REFERENCE for further information.
+# ggplot() is not your only option and we encourage to explore the use of base R plots and the coefplot() library.
 
 
-# 7. Refining Graphs #
+# EXERCISE:
+# 1. load in the "extract_financial.csv" data set.
+# 2. Estimate a linear regression model, using log expenditure to predict log income.
+# 3. Estimate the same linear regression model for each year.
+# 4. Graph the coefficient of log expenditure across all of the models.
+
+
+### END OF ACTIVITY SIX [ACT006] ###
+
+
+
+##############################################
+
+
+##############################################
+
+
+
+# 7. Further Adventures in Graphing [ACT007] #
 
 # In this section we build on the foundations we've laid earlier by adding layers of sophistication to our plots.
 # We will learn new geom_() functions and how to combine them effectively; move away from ggplot's default options and
 # start customising our graphs; and delve deeper into the scale(), guide() and theme() functions.
 
-# 7.1 New geom() plots
+
+# 7.1 New geom() Plots
 
 # Representing multiple histograms in a single plot is made easy by using the geom_freqpoly() function:
 library(gapminder)
@@ -1832,13 +1923,17 @@ p <- ggplot(data = gapminder,
             mapping = aes(x = lifeExp, colour = continent))
 
 p + geom_freqpoly() # represents a histogram using lines instead of bars but is otherwise equivalent
-# TASK: change the bandwidth of the histograms
+
+# TASK: change the bin width of the histogram.
+
 # QUESTION: can you make meaninful comparisons between the distributions of the life expectancy for each continent? Why or why not?
 
+# Let's tweak the default stat_() function:
 p <- ggplot(data = gapminder,
             mapping = aes(x = lifeExp, y = ..density.., colour = continent))
 
 p + geom_freqpoly() 
+
 # TASK: describe what effect 'y = ..density..' has on the graph, especially in terms of making comparisons between distributions.
 
 
@@ -1879,9 +1974,10 @@ diamonds %>%
 
 # 7.3.1 Using colour effectively via the scale() function
 
-# We spoke early in the workshop about using colours intelligently. For example,
+# We spoke earlier in the workshop about using colours intelligently. For example,
 # the categories of an unordered categorical variable require distinct colours, while
 # an ordered variable is better served by the use of gradation.
+
 # The default options of ggplot() are usually appropriate but we may want to specify our
 # own preferences via the scale() function and the RColorBrewer package.
 
