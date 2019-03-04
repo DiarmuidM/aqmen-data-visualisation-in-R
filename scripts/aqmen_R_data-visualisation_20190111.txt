@@ -1861,6 +1861,9 @@ regsum <- gapminder %>%
   unnest(tidied, .drop = TRUE) %>% 
   filter(term %nin% "(Intercept)" & continent %nin% "Oceania")
 
+# Note the use of "%nin%. It does the opposite of %in% and selects only the items in a first vector of characters that are not in the second.
+# In the above code, we only keep values of the variable "term" that do not equal "(Intercept)". It is a similar logic for continent and "Oceania".
+
 regsum
 summary(regsum)
 
@@ -1916,7 +1919,10 @@ p + geom_pointrange(position = position_dodge(width = 1)) +
 
 # 7.1 New geom() Plots
 
-# Representing multiple histograms in a single plot is made easy by using the geom_freqpoly() function:
+# 7.1.1 geom_freqpoly()
+
+# Representing multiple histograms in a single plot is made easy by using the geom_freqpoly() function
+
 library(gapminder)
 
 p <- ggplot(data = gapminder,
@@ -1937,15 +1943,67 @@ p + geom_freqpoly()
 # TASK: describe what effect 'y = ..density..' has on the graph, especially in terms of making comparisons between distributions.
 
 
-# 7.1.1 Dealing with two y-axes
-# It's usually not good practice to plot lines representing different time series on two axes - 
-# there is too much potential for misleading e.g. altering the y scales to display an
-# apparent correlation.
+# 7.1.2 geom_area()
 
-# Instead, you can do the following:
-# - display the line graphs side-by-side (i.e. use faceting)
-# - create an index of each time series and plot both lines on the same y-axis
+# An area plot is analogous to a stacked bar chart and is used to show how the composition of something varies over a range.
 
+# For example, how much of total income is accounted for by the largest charities, and has the composition varied over time?
+
+char_fin <- read_csv("./data_raw/extract_financial.csv") # load in charity financial records
+names(char_fin)
+
+# Create a categorical variable from income
+
+char_fin$inc_cat <- factor(cut(char_fin$income, breaks = c(0,25000,500000, Inf), labels = c("Small", "Medium", "Large")))
+table(char_fin$inc_cat) # the charity sector is mainly composed of smaller organisations
+head(char_fin$inc_cat)
+
+char_fin$year <- year(char_fin$fyend) # extract the year from "fyend"
+table(char_fin$year)
+
+char_fin <- char_fin %>% 
+  filter(year > 2003 & year < 2017) %>% # drop years for which we have too few observations
+  filter(!is.na(inc_cat))
+
+# Now we create a data set containing summary statistics:
+
+char_fin_sum <- char_fin %>%
+  group_by(year, inc_cat) %>% # collpase the data set by year and charity size
+  summarise(income = sum(income)) # create a new variable that is the sum of income for each combination of year and size
+
+View(char_fin_sum) # check the piping command produced a summary data set
+
+p <- ggplot(data = char_fin_sum, mapping = aes(x = year, y = income, fill = inc_cat))
+
+x11()
+p + geom_area()
+
+# Total income has risen over time and it looks as if the largest charities have preserved their share of total income.
+
+
+# 7.1.3 geom_tile()
+
+# Let's use the built-in "diamonds" data set to create a tile plot:
+
+diamonds %>% 
+  count(color, cut) %>%  
+  ggplot(mapping = aes(x = color, y = cut)) +
+    geom_tile(mapping = aes(fill = n))
+
+# TASK: describe the plot produced by this command; what does it tell you about combinations of diamond colour and quality?
+
+# There are a multitude of other plot types offered by ggplot2; take a look at the cheatsheet on the workshop
+# Github repository for an outline of other plots.
+
+
+# 7.2 Customisation
+
+
+# 7.4 Bits and Bobs
+
+# Let's take a quick look at some other useful tips and tricks when plotting data.
+
+# 7.4.1 Focusing on a particular area of a graph 
 
 # We can zoom in on a plot using coord_cartesian():
 contdata <- gapminder %>%
@@ -1956,20 +2014,69 @@ p <- ggplot(data = contdata,
 		mapping(aes(x = mn_loggdp, y = mn_lifeExp)
 
 p + geom_point() # let's zoom in a particular area of the plot:
+
 p + geom_point() + coord_cartesian(ylim = c(0, 50))
+
 # This approach doesn't throw away any data, it simply focuses on a particular range of values for either the y or x axis.
 
 # To restrict the range of values included in the plot, we use the xlim() and ylim() functions:
+
 p + geom_point() + ylim(0, 50) # this removes observations with values outwith the range specified
 
 # Of course, you can always filter your data to produce a subset of observations in a desired range.
 
-# A tile plot
-diamonds %>% 
-  count(color, cut) %>%  
-  ggplot(mapping = aes(x = color, y = cut)) +
-    geom_tile(mapping = aes(fill = n))
-# TASK: describe the plot produced by this command; what does it tell you about combinations of diamond colour and quality?
+
+# 7.4.2 Dealing with two y-axes
+
+# It's usually not good practice to plot lines representing different time series on two axes - 
+# there is too much potential for misleading e.g. altering the y scales to display an
+# apparent correlation.
+
+# Instead, you can do the following:
+# - display the line graphs side-by-side (i.e. use faceting)
+# - create an index of each time series and plot both lines on the same y-axis
+
+# To see this in ploy in action (deliberately), spend a few minutes on 
+# Tyler Vigen's website "Spurious Correlations" [http://www.tylervigen.com/spurious-correlations]
+
+
+# Final Thoughts #
+
+# Congratulations on progressing through the workshop. Our aim was to equip you, as rapidly and painlessly as possible,
+# with a proficiency in data visualisation using R .
+
+# While you have covered a great deal of material and skills, there is a bigger and badder world of R programming and visualisation out there.
+
+# Here are some suggestions for where you might go next in your skills development:
+#	- Wanting to delve deeper into ggplot2? Consult ggplot2: Elegant Graphics for Data Analysis [https://www.amazon.com/dp/331924275X/ref=cm_sw_su_dp]	
+#
+#	- Looking for new plot types? Check out [https://www.ggplot2-exts.org/], which keeps track of ggplot2 extensions developed by R users.
+#	(They even have a theme that makes your R plots look like Stata graphs, in case you're having withdrawal symptoms)
+
+#	- We didn't cover an increasingly prominent area of data visualisation: graphing spatial data.
+#		o Chapter 7 of Data Visualization: A Practical Introduction demonstrates how to use ggplot for drawing maps [http://socviz.co/maps.html#maps]
+#		o The U.K. Consumer Data Research Centre (CDRC) provides introductory material on using R for working with spatial data [https://data.cdrc.ac.uk/dataset/an-introduction-to-spatial-data-analysis-and-visualisation-in-r]
+
+# 	- Take a look at some of the suggested resources on workshop Github repository [https://github.com/DiarmuidM/aqmen-data-visualisation-in-R/tree/master/resources].
+
+# Hopefully this workshop has gone some way to convincing you of the value of adopting
+# social science approaches and tools for data science work; if not then let us know how we can improve;
+# if so then please engage with us on further topics and tools e.g. Social Network Analysis, Reproducible Data Analytics.
+
+# Good luck with future data visualisation and analytics work.
+
+
+# "Big wheels rolling through fields
+# Where sunlight streams
+# Meet me in a land of hope and dreams"
+
+# - Bruce Springsteen, Land of Hope and Dreams (2012)
+
+
+########################################### FIN ##################################################
+
+
+
 
 
 # 7.3.1 Using colour effectively via the scale() function
