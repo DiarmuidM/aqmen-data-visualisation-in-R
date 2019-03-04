@@ -60,7 +60,7 @@
 
 #	2. Wrangling Data for Graphing: how to organise and enable data for visualisation [ACT002]
 
-#	3. The Grammar of Graphics: how to create graphs in a logical and layered manner using ggplot2() [ACT003]
+#	3. The Grammar of Graphics: how to create graphs in a logical and layered manner using ggplot2 [ACT003]
 
 #	4. Graphs in Action: how to construct a multitude of plot types in R [ACT004]
 
@@ -110,6 +110,8 @@
 
 ##############################################
 
+
+
 # 0. Software Demonstration #
 
 # 0.1 System Setup #
@@ -151,7 +153,7 @@ file.info("./data_raw/sampdata.csv") # displays some basic file information
 
 # TASK: move the files from the workshop Dropbox folder to the "data_raw" directory you just created.
 
-# R functions used in this section:
+# New R functions used in this section:
 
 #	- getwd() - provide working directory location
 #	- c() - create a vector of values or objects
@@ -166,7 +168,7 @@ file.info("./data_raw/sampdata.csv") # displays some basic file information
 
 # 0.2 Installing Packages #
 
-# The real power of using R for data wrangling and analysis comes from the universe of user-written packages that are available.
+# The real power of using R for data wrangling, visualisation and analysis comes from the universe of user-written packages that are available.
 # A package bundles together code, data, documentation, and tests and provides an easy method to share with others.
 
 # Packages represent both a blessing and a curse: a blessing because it is unlikely you won't be able to find a function you need for your analysis;
@@ -175,9 +177,15 @@ file.info("./data_raw/sampdata.csv") # displays some basic file information
 
 # A package only needs to be installed once, but you will need to load it in every time you launch an R session.
 
-my_packages <- c("tidyverse", "car", "haven") # create a list of desired packages
+my_packages <- c("tidyverse", "broom", "car", "expss", "coefplot", "cowplot",
+                 "gapminder", "GGally", "ggrepel", "ggridges", "gridExtra",
+                 "here", "interplot", "lubridate", "margins", "maps", "mapproj",
+                 "mapdata", "MASS", "quantreg", "rlang", "scales",
+                 "survey", "srvyr", "viridis", "viridisLite", "devtools") # create a list of desired packages
 
 install.packages(my_packages, repos = "http://cran.rstudio.com") # install packages from the CRAN repository
+
+devtools::install_github("kjhealy/socviz") # install socviz package from Github (an alternative to CRAN for storing packages)
 
 installed.packages() # check which packages have been installed
 
@@ -190,18 +198,21 @@ library(tidyverse) # load in the "tidyverse" package of data wrangling functions
 ?tidyverse
 vignette("tidyverse")
 
+# TASK: load in the "car" and "expss" packages. The rest will be loaded in as we progress.
+
 # A final note about packages: you'll see mention of performing functions or tasks using base R. This means drawing on the functions that come
 # as standard with your version of R. install.packages() and write.csv() are examples of base R functions.
 
 # For the purposes of data wrangling (and most other data analysis tasks, frankly), we will not use base R functions; the reasons will become clear
 # as we progress but it is worth noting that there is more than one way to skin a cat.
 
-# R functions used in this section:
+# New R functions used in this section:
 
 #	- install.packages() - install R packages
 #	- installed.packages() - display installed R packages
 #	- .libPaths() - display directory of installed R packages
 #	- library() - load in R package
+#	- vignette() - view examples of how to use the function/package (not available for all functions/packages)
 
 ##############################################
 
@@ -209,7 +220,7 @@ vignette("tidyverse")
 ##############################################
 
 
-# 1. Getting Started with R #
+# 1. Getting Started with R [ACT001] #
 
 # R is a programming language. It has rules, packages, syntax, complexities, idiosyncracies...
 # It is not particularly easy to learn, nevermind master. It can seem as if you have to learn everything in order
@@ -309,6 +320,8 @@ int_var <- as.integer(int_var)
 print(typeof(int_var))
 
 # Vectors
+
+# Vectors provide a means of structuring data types as a list
 
 vec <- 1:10
 print(vec) # creates a vector from 1 to 10; a vector is a list of values stored in a single object
@@ -615,7 +628,7 @@ new_ses <- plyr::revalue(ses, c("low" = "small", "middle" = "medium", "high" = "
 print(new_ses)
 levels(new_ses)
 # Note that using the :: notation allows you to access the revalue() function without having to fully load in the plyr package.
-# There are other ways of recoding categorical variables, none of which (in my opinion) are as easy as Stata's approach.
+# There are other ways of recoding categorical variables, none of which (in our opinion) are as easy as Stata's approach.
 
 # Dropping categories with no observations
 
@@ -626,7 +639,14 @@ droplevels(ses_2)
 
 # 1.4 Saving Files #
 
-# I need to figure this out in the context of creating R project files.
+# We can save the current workspace (i.e. all of the objects and/or functions we have created):
+save(file="./temp/dv_workspace.RData") # RData is the file extension for a workspace
+load("c:/temp/dv_workspace.RData") # load in a workspace
+
+# However, we should have no need to save the workspace for a data wrangling/analysis piece of work;
+# we simply need our syntax file (R script) and raw data and we should be able to reproduce our project.
+
+# We can save our R script by pressing Ctrl + S (on Windows) or going to the File menu and selecting Save.
 
 
 # 1.5 Getting Help #
@@ -734,9 +754,7 @@ auto
 
 # Some simple graphs #
 
-# DMD TASK: ADD PLOTS FOR EACH COMBINATION OF VARIABLE TYPES E.G. CONTINUOUS BY CATEGORICAL (BOXPLOT), CAT BY CAT ETC
-
-# A simple box graph
+# A simple box plot
 
 str(auto$price)
 sum(is.na(auto$price)) # no missing values
@@ -744,12 +762,6 @@ sum(is.na(auto$price)) # no missing values
 x11() # opens a bigger window in which to display subsequent graphs
 ggplot(data = auto) + geom_boxplot(mapping = aes(x = "", y = auto$price)) # single boxplot (no x axis)
 ggplot(data = auto) + geom_boxplot(mapping = aes(x = auto$foreign, y = auto$price)) # two boxplots
-
-
-# A simple pie chart
-
-# Pie charts are tricky to produce in R and with ggplot2, and thus are not recommended
-# when a bar chart would suffice.
 
 
 # A simple bar chart
@@ -760,7 +772,7 @@ levels(auto$foreign)
 factor(auto$foreign) # that's more like it
 unclass(auto$foreign) # Domestic = 1; Foreign = 2
 
-x11() # opens a bigger window in which to display subsequent graphs
+x11() # opens a bigger window in which to display graphs
 ggplot(data = auto) + geom_bar(mapping = aes(auto$foreign)) 
 
 ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$foreign)) # add colour to the bars based on categories of foreign
@@ -771,7 +783,7 @@ ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78
 
 # A simple histogram
 
-x11() # opens a bigger window in which to display subsequent graphs
+x11()
 ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg)) # narrows bins result in gaps
 ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4)
 ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4, fill = "red") # add colour to the graph
@@ -786,7 +798,7 @@ ggplot(data = auto) + geom_density(mapping = aes(auto$mpg, fill = auto$foreign))
 
 # A simple dot chart
 
-x11() # opens a bigger window in which to display subsequent graphs
+x11()
 ggplot(data = auto) + geom_dotplot(mapping = aes(x = auto$price))
 
 
@@ -795,6 +807,15 @@ ggplot(data = auto) + geom_dotplot(mapping = aes(x = auto$price))
 ggplot(data = diamonds) +
   geom_count(mapping = aes(x = cut, y = color)) # a count plot is a good way of visualing the relationship between two categorical variables
 # QUESTION: what are the most common combinations of diamond colour and quality?
+
+
+
+# A simple pie chart
+
+# Pie charts are tricky to produce in R and with ggplot2, and thus are not recommended
+# when a bar chart would suffice.
+
+# You'll need to get your Pie fix elsewhere.
 
 
 # A simple scatterplot
@@ -819,68 +840,292 @@ ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = f
 #	- color
 #	- shape
 # 	- size
-#	- alpha
+#	- transparency (alpha = )
 
 # Keep these in mind as we progress, we'll also introduce other options that alter the display of the plots.
 
 
+# New R functions used in this section:
+
+#	- length() - return the length of an object
+#	- rm() - remove an object from the workspace environment
+#	- read_csv() - import csv files into R
+#	- export_csv() - export data as csv files from R
+#	- read_excel() - import xls/xlsx files into R
+#	- write_xlsx() -  export data as xls/xlsx files from R
+#	- options() - change default R settings
+#	- ls() - list objects in workspace environment
+#	- str() - examine the structure of an object
+#	- factor() - create a categorical variable
+#	- class() - return an object's class
+#	- as_tibble() - create a tibble data frame
+#	- data.frame() - create a data frame
+
+
+##############################################
+
+
+##############################################
 
 
 
+# 2. Wrangling Data for Graphing [ACT002] #
+
+# Wickham's dictum: Tidy datasets are all alike, but every messy dataset is messy in its own way.
+
+# In this section we focus on the many tasks associated with wrangling or marshalling your data into a format suitable for visualisation.
+# In R-speak, this means constructing a "tidy" data set. This format will be familiar to you. A tidy data set is one that:
+#	- is rectangular or tabular:
+#		o every value has its own cell
+#		o every variable has its own column
+#		o every observation has its own row
+
+# Social scientists are fluent in this format but as the known universe of data expands, corraling untidy data into a tidy format
+# will be a necessary skill. Examples of untidy data sources include text corpora, information scraped from websites etc. However,
+# even "recognisable" data sources can still be untidy e.g. administrative data, social surveys.
+
+# Finally, even if your data set is tabular, the variable names and values still need processing, new measures need to be constructed,
+# additional data sets need to merged or appended etc.
+
+# In this section we focus on importing data, and examining and manipulating variables.
+# We are going to work with large-scale, messy and longitudinal administrative data on U.K. charities.
+# A data dictionary can be found on the Charity Commission's website [http://data.charitycommission.gov.uk/data-definition.aspx]
+
+
+# 2.1 Importing Data Sets
+
+# This is the latest copy of the Charity Register i.e. list of all registered charities in England and Wales:
+char_reg <- read_csv("./data_raw/extract_main_charity.csv")
+# Ignore the warnings for now; we'll address those later.
+
+View(char_reg) # browse the data set
+head(char_reg) # view the first few rows of the data set
+tail(char_reg) # view the last few rows of the data set
+names(char_reg) # list of variable names
+str(char_reg) # examine the structure of the data set
+attributes(char_reg) # list the attributes (i.e. metadata) of the data set
+ncol(char_reg) # number of columns
+nrow(char_reg) # number of rows
+order(char_reg$regno) # sort the data set by ascending order of charity number
+
+# We can also add a label or comment to the dataset:
+comment(char_reg) <- "This dataset contains observations for registered charities in England & Wales (February 2019)"
+attributes(char_reg)
+
+# TASK: try adding a second comment to the dataset; what happens?
+
+# TASK: import the "extract_remove_ref.csv" file and describe the structure and contents of the data set, and label the data set.
+
+
+# 2.2 Examining Variables
+
+str(char_reg) # list the variables and their data type
+class(char_reg$income) # list the class of the income variable - it is numeric
+# Note the use of $col_name suffix to access variables in the data set i.e. data$variable.
+
+(var_lab(char_reg$income) <- "Latest annual gross income of a charity") # add a variable label using var_lab() function from "expss" package
+unlab(char_reg$income) # drop the variable label
+
+# TASK: add labels for all of the variables; refer to the data dictionary to understand the meaning of each column.
+
+head(char_reg$fyend) # day and month of a charity's financial year end
+class(char_reg$fyend) # stored as character data type - we want this to be a factor (categorical) variable
+(char_reg$fyend_cat <- as.factor(char_reg$fyend)) # create a new variable
+
+# QUESTION: what is the effect of enclosing the command in parentheses?
+
+levels(char_reg$fyend_cat) # hmmm, probably too many categories to be useful; let's drop this new variable:
+char_reg <- within(char_reg, rm(fyend_cat)) # remove the variable from the data set using the rm() function
+names(char_reg) # check if the variable was deleted
+
+# TASK: call the help documentation for the within() function and write a note describing its use.
+
+median(char_reg$income, na.rm = TRUE) # calculate median income, ignoring missing values
+summary(char_reg$income) # summary statistics for annual gross income; however, too difficult to read (in scientific notation)
+options(scipen=999) # change formatting display of numbers (no scientific notation)
+
+# TASK: run the summary() function once more. What is the mean income in the charity sector?
+
+char_reg$linc <- log(char_reg$income) # create a new variable that is a log transformation of annual gross income;
+# This is often a good idea as charity income is usually heavily positively skewed.
+hist(char_reg$linc) # plot a histogram of log income
+
+# TASK: generate a variable for income squared and plot a histogram of it.
+
+char_reg$highinc <- as.numeric(char_reg$income > 500000) # create a dummy variable that is set to 1 if income > £500k
+table(char_reg$highinc)
+class(char_reg$highinc) # stored as an integer
+
+char_reg$inc_cat <- cut(char_reg$income, breaks = c(0,25000,500000, Inf), labels = c("Small", "Medium", "Large")) # create a categorical variable from income
+
+# TASK: describe what the cut() function does and returns. What does "Inf" represent?
+
+summary(char_reg$inc_cat)
+class(char_reg$inc_cat) # stored as a factor
+levels(char_reg$inc_cat)
+
+char_reg$inc_cat[char_reg$inc_cat=="Small"] <- "Tiny" # recode one of the values of inc_cat to a different value (i.e. Small to Tiny)
+# EXAMPLE USING RECODE!
+
+
+# 2.4 Subsettting Data
+
+char_reg_sub <- subset(char_reg, select = c(regno, income, fyend)) # keep certain variables
+str(char_reg_sub)
+
+char_reg_fil <- subset(char_reg, income >= 500000) # keep certain observations
+summary(char_reg_fil$income)
+
+View(char_reg[char_reg$income >=100000000 & !is.na(char_reg$income), ])
+# Note the use of "[]" as another means of subsetting the data set. The above command displays the observations where
+# income is greater than £100m and income is not missing.
+
+# TASK: drop the "char_reg_sub" and "char_reg_fil" objects from the workspace.
+
+# Dealing with duplicates
+
+distinct(char_reg) # drops duplicate rows from the data set
+
+char_reg %>%
+  distinct(regno) # drop rows where there are duplicates of charity number; what is this new symbol %>%?
+
+# Piping
+
+# No, not the Scottish kind... Think of piping as a process for combining multiple functions in one command. It takes
+# data as an input, transfers it into some functions, and converts it into some results (like a pipeline). 
+# In the words of Healy (2019):
+# "A pipeline is typically a series of operations that do one or more of four things:
+#   1. Group the data into the nested structure we want for our summary, such as “Religion by Region” or “Authors by Publications by Year”.
+#   2. Filter or select pieces of the data by row, column, or both. This gets us the piece of the table we want to work on.
+#   3. Mutate the data by creating new variables at the current level of grouping. This adds new columns to the table without aggregating it.
+#   4. Summarize or aggregate the grouped data. This creates new variables at a higher level of grouping. For example we might calculate means with mean() or counts with n(). This results in a smaller, summary table, which we might do more things on if we want."
+
+# However, this is simply a taster of the tasks that can be performed while piping.
+
+# The pipe operator = %>% (Ctrl + Shift + M)
+
+# Piping is slightly abstract at first glance, so let's dig into some more examples:
+
+char_reg %>%
+  distinct(income) # we can see that the results of this command greatly reduces the size of the data set (79,919 rows)
+
+char_reg2 <- char_reg %>%
+  distinct(income) # store the results of the distinct command in a new object (char_reg2)
+
+# TASK: explore distinct observations for some of the other variables in the data set.
+
+
+# 2.5 Dealing with Missing Data
+
+# Think of missing values as being of two types:
+#	1. Explicitly missing
+#	2. Implicitly missing
+# The former is the presence of an absence (i.e. missing values are flagged as NA or 99), the latter the absence of a presence (i.e.
+# we do not possess an observation for that person for whatever reason).
+
+# In R, missing values are often represented by NA or some other user-specified value (e.g. 99).
+# Missing values are problematic as any the result of any operation involving them will also be missing (unknown). For example:
+x <- NA
+y <- NA
+x + 10
+y - 500
+NA == NA
+
+is.na(char_reg$income) # identify which values of the variable are missing
+which(is.na(char_reg$income)) # identify where in the variable the missing values are (i.e. the row number)
+sum(is.na(char_reg$income)) # count the number of missing values
+# Note how we wrapped the is.na() function inside the sum() function. This is a powerful feature of R and should be
+# kept in mind as you progress.
+
+# TASK: count the number of missing values for charity number, income date and email.
+
+# We can also use the complete.cases() function to identify and exclude rows with missing values:
+complete.cases(char_reg) # rows three and four have missing values for some/all of their variables
+char_reg[!complete.cases(char_reg), ] # list missing rows
+# Note the use of "!" in the above command: this is a logical negation e.g. NOT EQUALS. In the case above, the "!"
+# is returning the opposite of complete.cases().
+
+char_reg_nomiss <- na.omit(char_reg) # list non-missing rows
+nrow(char_reg_nomiss)
+
+# QUESTION: how many observations in the data set have no missing values for all of the variables?
+# TASK: create a new data set that only contains observations for which we have non-missing values for income.
+
+# We can exclude missing values from calculations and functions as follows:
+mean(char_reg$income)
+
+# QUESTION: why is the mean() function not returning a numeric value?
+
+mean(char_reg$income, na.rm = TRUE)
+
+# We can recode missing values quite easily:
+char_reg$income[is.na(char_reg$income)] <- -9 # recode missing to -9
+View(char_reg$income[char_reg$income==-9])
+
+char_reg$income[char_reg$income==-9] <- -NA # recode -9 as missing
+
+# TASK: recode 0 as missing for income.
+
+
+# 2.6 Saving Data
+
+# We have conducted some basic but effective data wrangling work on our raw data - time to save the results:
+
+write_rds(char_reg, "./data_clean/ew-charity-register-201902.rds") # save as an R file
+write_csv(char_reg, "./data_clean/ew-charity-register-201902.csv")
+
+read_rds("./data_clean/ew-charity-register-201902.rds") # load in the clean data file
+
+
+# New R functions used in this section:
+
+# NOT COMPLETED!!
+
+
+# EXERCISE: 
+# 1. Load in the data file "extract_charity.csv".
+# 2. How many variables does it contain? How many observations?
+# 3. Create a subset of this data set containing only registered charities.
+# 4. Drop duplicate observations in the data set.
+# 5. Produce a histogram of the number of subsidiaries a charity has.
+# HINT: don't forget to use the data dictionary if you are unsure what the data set or variables represent.
+
+
+# Congratulations on reaching the end of Activity Two. If you feel comfortable then feel free to continue
+# a little further with the material. 
+
+# It's nearly time to graph!
+
+
+### END OF ACTIVITY TWO [ACT002] ###
+
+
+##############################################
+
+
+##############################################
 
 
 
-
-
-
-
-
-
-
-# Data Visualisation in R #
-# Derived from Fogarty (2018) and Healy (2019)
+# 3. The Grammar of Graphics [ACT003] #
 
 # Data Visualisation is a key skill in social science data analysis, playing a vital role in theory development, 
 # measurement, data exploration, and interpretation and communication of results. 
+
 # It is an equally powerful and convincing approach to data analysis in industry.
 
 # The aim of a visualisation is to present a great deal of often complicated/complex information in as clear, concise and
 # intelligible way as possible; by and large, the consumer of a graph should not need to know the underlying logic and details
 # of the analysis in order to understand the message conveyed by the visualisation.
 
-#############
-
-# ADD IN PRELIMINARIES FROM AQMEN DO FILES
-
-##############
+# Graphs are a particularly powerful means of highlighting similarities and differences between groups.
 
 
-#### TASKS (DMD) #####
+# 3.1 ggplot2
 
-# Number the sections, starting from 0.
-# Set up course directories for files.
-# Match sections to course programme.
-# Learn how to save R scripts.
-# Add some material from data wrangling and predictive analytics workshops e.g. summary stats
-# Add some material on RMarkdown for the final day!!
-
-###########################
-
-# Install and load in necessary packages
-
-# A package only needs to be installed once, but you will need to load it in every time you launch an R session.
-my_packages <- c("tidyverse", "broom", "coefplot", "cowplot",
-                 "gapminder", "GGally", "ggrepel", "ggridges", "gridExtra",
-                 "here", "interplot", "margins", "maps", "mapproj",
-                 "mapdata", "MASS", "quantreg", "rlang", "scales",
-                 "survey", "srvyr", "viridis", "viridisLite", "devtools") # create a list of desired packages
-
-install.packages(my_packages, repos = "http://cran.rstudio.com") # install packages from the CRAN repository
-
-devtools::install_github("kjhealy/socviz") # install socviz package from Github (an alternative to CRAN for storing packages)
-
-library(ggplot2)
+library(ggplot2) # load in the package
 ?ggplot2
+
 # ggplot2 works by combining "layers" to create a visualisation i.e. data + variables/axes + graph/plot type + labelling etc
 # It is an implementation of an approach known as the "grammar of graphics" (Wilkinson, 2005):
 
@@ -891,154 +1136,66 @@ library(ggplot2)
 # and projecting the results onto a different coordinate system (usually cartesian)."
 # (Healy, 2019)
 
-# Note that we could use R's default plotting options (e.g. boxplot() etc) but we feel it is
-# best to get into the habit of using the more flexible, varied and powerful options provided
-# by ggplot2.
+# Note that we could use R's default plotting options (e.g. boxplot(), hist() etc) but we feel it is
+# best to get into the habit of using the more flexible, varied and powerful options provided by ggplot2.
 
-# Further reasons to like ggplot? The default display options are well-chosen and there are a multitude of options for refining plots;
+# Further reasons to like ggplot2? The default display options are well-chosen and there are a multitude of options for refining plots;
 # these features incorporate general rules for good visualisation as well as cognitive preferences for information presentation 
-# i.e. accounts for how we perceive colour, shapes, text, length etc.
-
-# 1. Import data #
-
-library(readr)
-
-auto <- read_csv("C:/Users/mcdonndz-local/Desktop/github/aqmen_wp3/data/auto.csv") # the famous sysuse data set from Stata
-str(auto)
-auto
-
-# 2. Some simple graphs #
-
-# DMD TASK: ADD PLOTS FOR EACH COMBINATION OF VARIABLE TYPES E.G. CONTINUOUS BY CATEGORICAL (BOXPLOT), CAT BY CAT ETC
-
-# A simple box graph
-
-str(auto$price)
-sum(is.na(auto$price)) # no missing values
-
-x11() # opens a bigger window in which to display subsequent graphs
-ggplot(data = auto) + geom_boxplot(mapping = aes(x = "", y = auto$price)) # single boxplot (no x axis)
-ggplot(data = auto) + geom_boxplot(mapping = aes(x = auto$foreign, y = auto$price)) # two boxplots
+# i.e. the package accounts for how we perceive colour, shapes, text, length etc.
 
 
-# A simple pie chart
-
-# Pie charts are tricky to produce in R and with ggplot2, and thus are not recommended
-# when a bar chart would suffice.
-
-
-# A simple bar chart
-
-class(auto$foreign) # stored as character data type - we want this to be a factor (categorical) variable
-auto$foreign <- as.factor(auto$foreign) # coerce the foreign variable to be factor data type
-levels(auto$foreign)
-factor(auto$foreign) # that's more like it
-unclass(auto$foreign) # Domestic = 1; Foreign = 2
-
-x11() # opens a bigger window in which to display subsequent graphs
-ggplot(data = auto) + geom_bar(mapping = aes(auto$foreign)) 
-
-ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$foreign)) # add colour to the bars based on categories of foreign
-ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78)) # add colour to the bars based on categories of rep78; the result is a stacked bar chart
-ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "fill") # stacked bars of same height
-ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "dodge") # place bars side-by-side
-
-
-# A simple histogram
-
-x11() # opens a bigger window in which to display subsequent graphs
-ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg)) # narrows bins result in gaps
-ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4)
-ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4, fill = "red") # add colour to the graph
-
-# Histogram diassgregated by a second variable:
-ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4)
-# Note how we moved the fill option inside the aes() function.
-
-# Density plot
-ggplot(data = auto) + geom_density(mapping = aes(auto$mpg, fill = auto$foreign))
-
-
-# A simple dot chart
-
-x11() # opens a bigger window in which to display subsequent graphs
-ggplot(data = auto) + geom_dotplot(mapping = aes(x = auto$price))
-
-
-# A simple count plot
-
-ggplot(data = diamonds) +
-  geom_count(mapping = aes(x = cut, y = color)) # a count plot is a good way of visualing the relationship between two categorical variables
-# QUESTION: what are the most common combinations of diamond colour and quality?
-
-
-# A simple scatterplot
-
-x11() # opens a bigger window in which to display subsequent graphs
-ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg))
-# QUESTION: what is the association between miles per gallon and the price of a car?
-
-ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, color = foreign))
-# QUESTION: what is the effect of specifying the color option in the aes() function?
-
-ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, size = foreign))
-# QUESTION: is a categorical variable a good choice for mapping to the size aesthetic?
-
-ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, alpha = foreign))
-
-ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = foreign))
-ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = foreign, color = foreign))
-# Note how we can combine different shapes and colours in a single plot.
-
-# We've introduced a number of different aesthetic options in the above graphs:
-#	- color
-#	- shape
-# 	- size
-#	- alpha
-
-# Keep these in mind as we progress, we'll also introduce other options that alter the display of the plots.
-
-
-# 3. ggplot() basics #
+# 3.2 The Basics of ggplot()
 
 # data > mapping > geom > co-ordinates and scales > labels
 # The above represents the basic syntax of a ggplot graph; let's look at an example to understand what is happening at each
 # step and the final result:
 
-library(gapminder) # load in gapminder data - see https://www.gapminder.org/
+library(gapminder) # load in gapminder data
 gapminder
 
+# TASK: view the content and structure of this data set. How many observations and variables does it contain? 
+
+# See the gapminder website to learn more about this data set and the much-missed Hans Rosling [https://www.gapminder.org/]
+# P.S. You can watch the great man in action here: [https://www.youtube.com/watch?v=hVimVzgtD6w]
+
 # Create the base object for producing our graph (i.e. the data and mapping components):
+
+summary(gapminder$gdpPercap)
+summary(gapminder$lifeExp) # summarise our two variables of interest
 
 p <- ggplot(data = gapminder,
             mapping = aes(x = gdpPercap,
                           y = lifeExp))
-# We pass some data to the ggplot() function, followed by mapping the variables in the data to the aesthetic of the plot
-# i.e. how it is going to look.
+
+# Let's unpack the above command:
+# 1. We pass some data to the ggplot() function.
+# 2. Then we map variables in the data to a set of plot co-ordinates (i.e. x and y axes).
 
 # Next we specify what type of plot we would like to draw and add it to the base object we created ("p"):
 
 p + geom_point() # geom_point() creates a scatterplot
+
 # QUESTION: how would you describe the association between GDP and life expectancy based on this graph?
 
 # Healy's (2019) summary of the graphing process in R:
-# 	1. Tell the ggplot() function what our data is.
-#	2. Tell ggplot() what relationships we want to see. For convenience we will put the results of the first two steps in an object called p.
+# 	1. Tell the ggplot() function what data we want to use.
+#	2. Tell ggplot() what relationships we want to see. For convenience we will put the results of the first two steps in an object called p (but this can be given an alternative name).
 # 	3. Tell ggplot how we want to see the relationships in our data (i.e. choose a geom).
-#	4. Layer on geoms as needed, by adding them to the p object one at a time.
-#	5. Use some additional functions to adjust scales, labels, tick marks, titles.
+#	4. Layer on additional geoms as needed, by adding them to the p object one at a time.
+#	5. Use some additional functions to adjust scales, labels, tick marks, titles etc.
 
-# Let's add an additional geom to the graph:
+# Let's add an additional geom to our graph:
 
 p + geom_point() + 
   geom_smooth() # 'smooth' the trend line 
 
-# A quick (and important) aside: note how the '+' symbol appears at the end of the line. This is crucial as placing on the next line will result in the
+# A quick (and important) aside: note how the '+' symbol appears at the end of the line. This is crucial as placing it on the next line will result in the
 # command not executing. This is because R understands the end of a line (i.e. a carriage return) as being the end of the command.
 
 p + geom_point() + 
   geom_smooth() +
   scale_x_log10() # adjust the x axis by converting to log (base 10) values
+
 # QUESTION: what have we done by converting the x axis to a log scale?
 
 p + geom_point() + 
@@ -1048,14 +1205,15 @@ p + geom_point() +
 
 # We can manually adjust the aesthetic of the graph by including it as an argument of the geom() function i.e. it goes outside of aes().
 # Here is some advice from Grolemund & Wickham (2017):
-#	- color = "name of color" i.e. is a string
+#	- color = "name of color" i.e. is a string ("red", "blue")
 #	- size = number in mm
 #	- shape = number between 0 and 24
 
 p + geom_point(colour = "purple") + 
   geom_smooth() +
   scale_x_log10(labels = scales::dollar) # adjust the colour of the plotted points; note how it is included in the geom() funciton, NOT aes()
-# TASK: change the colour and size of the trend line in the above plot (hint: size takes an integer as its value, not a string).
+
+# TASK: change the colour and size of the trend line in the above plot.
 
 # Finally, let's add some labels and descriptions of the plot's various components:
 
@@ -1066,11 +1224,12 @@ p + geom_point(alpha = 0.3) +
        title = "Economic Growth and Life Expectancy",
        subtitle = "Data points are country-years",
        caption = "Source: Gapminder.")
+
 # QUESTION: what effect does the 'alpha = 0.3' option have on the plot?
 
 # TASK: disaggregate the above plot by a third variable: 'continent' (hint: you need to edit the p object).
 
-# ggplot expects your data to be tidy:
+# ggplot() expects your data to be tidy:
 #	- every variable is a column
 #	- every observation is a row
 
@@ -1079,7 +1238,7 @@ p + geom_point(alpha = 0.3) +
 # unaffected.
 
 
-# 4. Saving graphs #
+# 3.3 Saving Graphs
 
 # We often want to save plots individually for inclusion in papers, presentations, sharing with colleagues etc. ggplot() makes this easy:
 
@@ -1091,54 +1250,120 @@ p_out <- p + geom_point(alpha = 0.3) +
        subtitle = "Data points are country-years",
        caption = "Source: Gapminder.") # store the full plot as a new object 'p_out'
 
-ggsave("mylovelygraph.png", plot = p_out, height = 8, width = 12) # the first argument is the file path and name, the second is the name of the plot to save,
+ggsave("./figures/mylovelygraph.png", plot = p_out, height = 8, width = 12) # the first argument is the file path and name, the second is the name of the plot to save,
 # the third and fourth control the size (in inches) of the image (though you can add a fifth argument ('units = ') to be specific.
 
-ggsave("mylovelygraph.pdf", plot = p_out, height = 8, width = 12) # save as pdf
+ggsave("./figures/mylovelygraph.pdf", plot = p_out, height = 8, width = 12) # save as pdf
 
 
-# 5. Data management #
+# EXERCISE: 
+# 1. Load in the data file "extract_financial.csv".
+# 2. Produce a scatterplot of income and expenditure.
+# 3. Adjust this plot so that both axes are log scaled (base 10).
+# 4. Add meaningful plot titles and labels.
+# 5. Summarise the association between these two variables. How much information can you glean from a simple graph like this?
+
+
+### END OF ACTIVITY THREE [ACT003] ###
+
+# If you've finished ahead of time then please use this opportunity to revisit
+# troublesome topics/commands and ask the tutors plenty of questions.
+
+
+##############################################
+
+
+##############################################
+
+
+# AND NOW FOR SOMETHING COMPLETELY DIFFERENT
+
+# Making a near-perfect Yorkshire Pudding - a la Vernon Gayle #
+
+# 3 eggs
+# 115g plain flour
+# 285ml milk
+# 12 tablespoons vegetable oil / I prefer beef dripping
+
+# 1. Whisk the eggs, flour, salt, and milk together really well in a bowl 
+to make your batter. 
+
+# 2. Pour the batter into a jug, and let it sit for 30 minutes before you use it. 
+
+# 3. Turn your oven up to the highest setting and place the baking tray in the 
+oven to heat up for 5 minutes. 
+
+# 4. Place 1 table spoon of oil in each indentation, 
+and put the tray back into the oven and heat until oil is very hot.
+ 
+# 5. Open oven door, slide the tray out, and carefully pour the batter in. 
+
+# 6. Close the door and cook for 15 minutes without opening the oven door. 
+
+# Serve immediately with roast beef (or similar) veg and gravy.
+
+
+### END OF DAY ONE ###
+
+
+##############################################
+
+
+##############################################
+
+
+### BEGINNING OF DAY TWO ###
+
+# REMINDER: this is a new R session and you need to reload (but not reinstall) the packages you need
+# for the upcoming activities. E.g. library(tidyverse)
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate) # package for working with dates
+
+
+# 4. Graphs in Action [ACT004] #
+
+# 4.1 Combining Data Management and Graphing #
 
 # We often need to get our data in a format suitable for plotting: we might need to 
 # collapse our data set to create aggregate values (e.g. yearly trends), or compute
 # summary statistics from the raw data, or disaggregate our data into different pieces.
 
-# In this section you will learn how to perform some crucial data management tasks using ggplot
-# and R more generally. Using ggplot, we will focus on 'grouping', 'faceting' and 'transforming'
-# our data for plotting.
+# In this section you will learn how to use ggplot() to perform some crucial data management work.
+# We will focus on 'grouping', 'faceting' and 'transforming'our data for plotting.
 
 
-# 5.1. Grouping
-# Let's try and produce a graph of life expectency trajectory for each country over time:
-library(gapminder) # load in gapminder data - see https://www.gapminder.org/
+# 4.1.1 Grouping
+
+# Let's try and produce a graph of life expectancy trajectory for each country over time:
+library(gapminder) # load in gapminder data
 gapminder
 
 p <- ggplot(data = gapminder,
             mapping = aes(x = year,
                           y = lifeExp))
 p + geom_line() 
-# QUESTION: what do you think has gone wrong here? Hint: take a look at the rows in the data.
-# If you're looking for comfort in your graphing troubles, check out @accidental__aRt on Twitter...
+
+# QUESTION: what do you think has gone wrong here? HINT: take a look at the rows in the data.
+
+# If you're looking for comfort for your graphing troubles, check out @accidental__aRt on Twitter...
 
 # Let's see if we can correct the issue using the 'group' aesthetic:
 p <- ggplot(data = gapminder,
             mapping = aes(x = year,
                           y = lifeExp))
 p + geom_line(aes(group=country))
-# That looks more like it: one line per country. It's still pretty rough-looking but we'll
-# learn how to spruce it up later.
+
+# That looks more like it: one line per country. It's still pretty rough-looking but we'll learn how to spruce it up later.
+
 # QUESTION: how would you interpret the trend in life expectency over time?
 
-# TASK: try grouping by another variable of your choice.
 
-# The 'group' aesthetic is only necessary if the information ggplot needs is not built-in
-# to the variables being plotted.
+# 4.2.1 Faceting
 
-
-# 5.2 Faceting
-
-# This is a very useful function for creating separate plots in the one visualisation.
-# We do this by including a third variable in the ggplot command.
+# This is a very useful function for creating separate plots in a single visualisation.
+# We do this by including a third variable in the ggplot() command.
 
 # For example, the plot of life expectency we produced above is cluttered and it would be useful to separate lines
 # by continent to see if there are regional differences in life expectency.
@@ -1149,17 +1374,20 @@ p <- ggplot(data = gapminder,
 
 p + geom_line(aes(group=country)) +
   facet_wrap(~ continent)
-# TASK: describe the results of this graph.
 # We use the '~' symbol to tell the facet_wrap command that we are providing it with a
 # formula - in this case just a single variable but we could add more.
 
+# TASK: describe the results of this graph.
+
 p + geom_line(aes(group=country)) +
   facet_wrap(~ continent, ncol = 5)
+
 # QUESTION: what happens when we add the 'ncols' argument to the facet?
 
 # Let's produce a cleaner graph:
 p <- ggplot(data = gapminder, mapping = aes(x = year, y = lifeExp))
 
+x11()
 p + geom_line(color="gray70", aes(group = country)) +
   geom_smooth(size = 1.1, method = "loess", se = FALSE) +
   scale_y_log10(labels=scales::dollar) +
@@ -1169,11 +1397,12 @@ p + geom_line(color="gray70", aes(group = country)) +
        title = "Life Expectency on Five Continents")
 # Still needs some work but not bad...
 
-# facet_wrap() function is best used when you want multiple plots based on a single 
+# The facet_wrap() function is best used when you want multiple plots based on a single 
 # categorical variable. If you a more complex graph, like one based on a contingency table,
 # it is best to use the facet_grid() function.
 
 # Load in the General Social Survey (GSS) 2016 data
+
 library(socviz) # load in socviz suite of data sets and other resources
 library(tidyverse) # load in tidyverse suite of packages
 
@@ -1190,8 +1419,8 @@ x11()
 p + geom_point(alpha = 0.2) +
   geom_smooth() +
   facet_grid(sex ~ race)
-# Note the syntax of facet_grid(): we are essentially saying "give us a plot of age and offspring,
-# BY sex and race.
+# Note the syntax of facet_grid(): we are essentially saying "give us a plot of age and offspring, by sex and race.
+
 # QUESTION: what can you say about the relationship between age and offspring, and how it
 # is mediated by a respondent's sex and race?
 
@@ -1199,76 +1428,115 @@ x11()
 p + geom_point(alpha = 0.2) +
   geom_smooth() +
   facet_grid (~ race + sex)
-# QUESTION: what is the difference between using (sex ~ race) and (~ sex + race)?
 
+# QUESTION: what is the difference between using (sex ~ race) and (~ sex + race)?
 
 # TASK: explore the gss_sm data set and produce a multi-way graph of two numeric variables
 # disaggregated by one or more categorical variables. Write a note summarising the results
 # of this graph.
 
-# An alternative to facet_() functions is the subset() function:
-str(midwest)
-class(midwest$state)
-print(as.factor(midwest$state)) # 5 states in this data set
 
-oh_wi <- c("OH", "WI") # specify a list of states we are interested in
+# 4.1.3 Transforming
 
-p <- ggplot(data = subset(midwest, subset = state %in% oh_wi),
-            mapping = aes(x = percollege, fill = state))
-
-p + geom_histogram(alpha = 0.4, bins = 20)
-# TASK: describe each component of the above ggplot.
-
-
-# 5.3 Transforming
 # Some geom_() functions perform some work on the data before presenting the results.
+
 # Every geom_() function has an associated stat_() function e.g. the geom_smooth() function
 # allows us to specify different methods for drawing a line that summaries the data points.
+
 # The reverse is also true: every stat_() function has a geom_() function.
+
 # Let's dig into this in more detail:
 
-p <- ggplot(data = gss_sm,
-            mapping = aes(x = bigregion))
+char_reg <- read_csv("./data_raw/extract_main_charity.csv") # load in charity register
+names(char_reg)
+
+# Let's distinguish between unincorporated and incorporated charities:
+char_reg <- char_reg %>% 
+  mutate(comp = ifelse(!is.na(coyno), 1, 0)) # create a dummy variable to identify companies
+
+char_reg$comp <- as.factor(char_reg$comp) # convert numeric variable to categorical
+table(char_reg$comp) # ~ 35,000 charities are incorporated
+
+char_reg$incy <- year(char_reg$incomedate) # extract the year from "incomedate"
+head(char_reg$incy)
+
+# Graph distribution of company status
+
+p <- ggplot(data = char_reg,
+            mapping = aes(x = comp))
+
 p + geom_bar() 
-# geom_bar() calculates and plots the counts/frequencies for the categories; what if we
-# wanted proportions instead?
+# geom_bar() calculates and plots the counts/frequencies for the categories; what if we wanted proportions instead?
 
 p + geom_bar(mapping = aes(y = ..prop..))
 # Behind the scenes geom_bar() has called on its default stat_() function to produce
 # two temporary variables: ..count.. and ..prop..
-# They are bookended by full stops to distinguish them from variables in the data set.
+# They are bookended by full stops to distinguish them from real variables in the data set.
+
 # QUESTION: why do you think each bar sums to 1?
 
 # Let's try fixing the summing issue:
 p + geom_bar(mapping = aes(y = ..prop.., group = 1)) # that's better
-# Adding the 'group = 1' argument tells geom_bar() to treat the data set as a single group.
 
-# Let's get more familiar with stat_() functions:
-table(gss_sm$religion) # frequency table of religion variable
+# Adding the 'group = 1' argument tells geom_bar() to treat the data set as a single group. That is, what proportion of
+# the total observations are companies.
 
-p <- ggplot(data = gss_sm,
-            mapping = aes(x = religion, fill = religion))
+# Let's get more familiar with transforming the data underlying plots:
+
+# Create a variable capturing charity size
+char_reg$inc_cat <- cut(char_reg$income, breaks = c(0,25000,500000, Inf), labels = c("Small", "Medium", "Large"))
+table(char_reg$inc_cat) # frequency table of charity size
+
+p <- ggplot(data = char_reg,
+            mapping = aes(x = inc_cat, fill = inc_cat))
+
 p + geom_bar() + guides(fill = FALSE) 
 # guides() controls the display of the legend; in this instance we've suppressed the display of this feature.
 
-# Now let's disaggregate religion by a second categorical variable:
-p <- ggplot(data = gss_sm,
-            mapping = aes(x = religion, fill = religion))
+# Note the "NA" category - remember that this value represents missing data. Let's drop these observations from the data set:
+char_reg_sub <- char_reg %>% 
+  filter(!is.na(inc_cat))
+
+# Now let's disaggregate charity size by a second categorical variable (company status):
+p <- ggplot(data = char_reg_sub,
+            mapping = aes(x = inc_cat, fill = inc_cat))
 
 p + geom_bar(mapping = aes(y = ..prop.., group = 1)) +
-  facet_wrap(~ bigregion) +
+  facet_wrap(~ comp) +
   guides(fill = FALSE) 
+
+# QUESTION: what can you say about the relationship between charity size and company status?
+
 # TASK: try and add colour and labels to the above graph.
 
-# Let's look at histograms and their stat_() functions:
-p <- ggplot(data = midwest,
-            mapping = aes(x = area))
+# Let's take a quick look at histograms and their stat_() functions:
+char_reg$linc <- log(char_reg$income) # transform income using the natural log
+
+# QUESTION: why do we transform income using the natural log?
+
+p <- ggplot(data = char_reg,
+            mapping = aes(x = linc))
 p + geom_histogram(bins = 10)
+
 # TASK: change the number of bins and describe the effect on the display of the information.
 
 # Transforming data is vary useful step in producing effective visualisations.
 # However, it is often easier to transform the data prior to calling the ggplot command;
-# we'll learn to do this soon [PROBABLY EARLIER IN THE WORKSHOP]
+# we'll see how this is done over the next couple of activities.
+
+
+### END OF ACTIVITY FOUR [ACT004] ###
+
+
+
+##############################################
+
+
+##############################################
+
+
+# 5. Refining Graphical Presentations [ACT005] #
+
 
 
 # 6. Communicating Analytical Results #
