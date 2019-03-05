@@ -1535,7 +1535,375 @@ p + geom_histogram(bins = 10)
 ##############################################
 
 
+
 # 5. Refining Graphical Presentations [ACT005] #
+
+# In this section we build on our considerable plotting skills in two ways:
+
+# 1. Adding and adjusting the design elements of the plot (e.g. labels, annotations).
+
+# 2. Getting our data in better shape prior to plotting. 
+
+
+# 5.1 Plotting text
+
+library(lubridate)
+library(gapminder)
+gapminder
+glimpse(gapminder)
+
+table(gapminder$continent)
+levels(gapminder$continent)
+
+# Let's examine life expectancy:
+lexp_analysis <- gapminder %>%
+  filter(pop < 5000000) %>%
+  group_by(country) %>%
+  summarise(lexp_mean = mean(lifeExp, na.rm = TRUE),
+            pop_mean = mean(pop, na.rm = TRUE))
+
+# TASK: describe what the above piping command is doing.
+
+p <- ggplot(data = lexp_analysis,
+            mapping = aes(x = pop_mean, y = lexp_mean))
+
+x11()
+p + geom_point() + geom_text(mapping = aes(label = country)) # doesn't look great; let's make some tweaks
+
+p + geom_point() + geom_text(mapping = aes(label = country), hjust = 0) # right-justify the text
+# This isn't a visually pleasing graph but you can see how labelling the text would be beneficial if
+# there were only a few points or lines plotted on a graph.
+
+# The default geom_text() function is a bit awkward to use; better to employ a user-written package called ggrepel():
+# install.packages("ggrepel")
+library(ggrepel)
+
+char_fin <- read_csv("./data_raw/extract_financial.csv") # load in charity financial records
+names(char_fin)
+
+# Let's plot the association between income and expenditure in 2015, disaggregated by charity size
+
+# Create a categorical variable of charity size
+
+char_fin$inc_cat <- factor(cut(char_fin$income, breaks = c(0,25000,500000, Inf), labels = c("Small", "Medium", "Large")))
+table(char_fin$inc_cat) # the charity sector is mainly composed of smaller organisations
+head(char_fin$inc_cat)
+
+char_fin$year <- year(char_fin$fyend) # extract the year from "fyend"
+table(char_fin$year)
+
+char_fin$linc <- log(char_fin$income)
+char_fin$lexp <- log(char_fin$expend) # create log versions of income and expenditure
+
+set.seed(1) # set the seed i.e. ensure random samples are the same each time they are produced (useful for replicating data)
+char_fin_sub <- char_fin %>% 
+  filter(year == 2015 & !is.na(inc_cat)) %>% 
+  sample_n(30) # keep a random sample of 30 observations
+
+char_fin_sub
+
+# TASK: see if the seed has been set by re-running the above code. Do you get the same observations each time?
+
+# Create our base plot object
+
+p <- ggplot(data = char_fin_sub, mapping = aes(x = lexp, y = linc, label = inc_cat)) # note we need to specify the label option
+
+## Draw the plot
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 1, color = "red") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 1, color = "red") +
+  geom_point() +
+  geom_text_repel() + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "£")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£")) # add "£" signs to the axes labels
+                     
+# Add labels and other useful information                     
+                     
+p_title <- "Charity Income and Expenditure"
+p_subtitle <- "2015"
+p_caption <- "Random sample of 30 charities reporting income for this year."
+x_label <- "Expenditure (log £)"
+y_label <- "Income (log £)"
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 0.8, color = "gray") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 0.8, color = "gray") +
+  geom_point() +
+  geom_text_repel() + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "£")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£")) + # add "£" signs to the axes labels
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# QUESTION: using this sample of charities, how would you characterise the relationship between income and expenditure?
+# Is there evidence of charities not spending incoming resources?
+
+# TASK: search for help on the geom_text_repel() function; play around the with above graph by altering the each element.
+
+# 5.2. Labelling outliers
+
+# Sometimes we just want to highlight particular data points or cases. We can use geom_text_repel()
+# to do this by telling it to use a subset of the data:
+
+p <- ggplot(data = char_fin_sub, mapping = aes(x = lexp, y = linc, label = regno)) # note we need to specify the label option
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 0.8, color = "gray") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 0.8, color = "gray") +
+  geom_point() +
+  geom_text_repel(data = subset(char_fin_sub, lexp < 4 & linc < 12)) + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "£")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£")) + # add "£" signs to the axes labels
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# TASK: describe the effect of the addition of subset() to the plot.
+
+# An alternative approach is to create an indicator (dummy) variable and subset by it.
+
+# 5.3. Writing and drawing in the plot area
+
+# Sometimes we are interested in adding our own annotations to the graph, perhaps to 
+# pick out surprising data points or to add some commentary to the patterns observed.
+
+p <- ggplot(data = char_fin_sub, mapping = aes(x = lexp, y = linc)) # note we need to specify the label option
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 0.8, color = "gray") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 0.8, color = "gray") +
+  geom_point() +
+  annotate(geom = "text", x = 4, y = 12, label = "No observations", hjust = 0) + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "£")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£")) + # add "£" signs to the axes labels
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# TASK: describe the logic and results of the annotate() function.
+
+# We can also draw shapes on the plot:
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 0.8, color = "gray") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 0.8, color = "gray") +
+  geom_point() +
+  annotate(geom = "rect", xmin = 4, xmax = 8, ymin = 4, ymax = 10, fill = "blue", alpha = .3) + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "£")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£")) + # add "£" signs to the axes labels
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+
+# 5.4 Summarising data prior to plotting
+
+# It is usually more awkward and time consuming to rely on geom stat_() functions to summarise our variables
+# during the graphing process. It is better to get into the habit of preparing our data in advance of plotting,
+# using the very handy 'dplyr' package that comes with the 'tidyverse' distribution.
+
+# We have already seen this done throughout the workshop but let's explore a few more examples.
+
+library(socviz) # load in socviz suite of data sets and other resources
+library(tidyverse) # load in tidyverse suite of packages
+
+gss_sm # U.S. General Social Survey
+str(gss_sm)
+glimpse(gss_sm)
+
+table(gss_sm$bigregion, gss_sm$religion) # crosstab of our two variables of interest
+
+# To build our summary table, we need to perform a sequence of tasks on our data set
+# using the pipe operator %>%.
+
+# Let's create a crosstab of religion by region:
+rel_by_reg <- gss_sm %>% 
+  group_by(bigregion, religion) %>%
+  summarize(N = n()) %>%
+  mutate(freq = N / sum(N), pct = round((freq*100), 0))
+
+View(rel_by_reg) # display the summary table we created
+
+# There's a lot going on in the above command, so let's take it piece-by-piece:
+#   1. we create a new object (rel_by_reg)
+#   2. state which data set we are wanting to use (gss_sm)
+#   3. take that data and group it by region and religion (similar to the table() command earlier)
+#   4. summarise this table by creating a new column (N) which is a count of observations
+#   5. create two new variables: proportion and percentage of observations in each category
+
+# TASK: play around with the pipe command we specified (i.e rel_by_reg etc);
+# try removing layers starting at the bottom - how does that effect the final table?
+
+# Let's check if the percentages sum to 100 in our summary table:
+sanity_check <- rel_by_reg %>%
+  group_by(bigregion) %>%
+  summarise(total = sum(pct))
+
+sanity_check # some rounding errors but pretty much correct
+
+p1 <- ggplot(data = rel_by_reg, mapping = aes(x = bigregion, y = pct, fill = religion))
+
+p1a <- p1 + geom_col() +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top") # not bad at all, but let's stack the bars side-by-side:
+
+p1b <- p1 + geom_col(position = "dodge2") +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top")
+
+# QUESTION: why did we use geom_col() instead of geom_bar()?
+
+# I think we can do better; let's swap the x and y axes:
+p2 <- ggplot(data = rel_by_reg, mapping = aes(x = pct, y = bigregion, fill = religion))
+
+p2 + geom_col(position = "dodge2") +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top") # ehh...
+
+# geom_col has an internal logic that prevents simply swapping the axes in the mapping function.
+# Thankfully there is another way:
+p3 <- ggplot(data = rel_by_reg, mapping = aes(x = religion, y = pct, fill = religion))
+
+p3 + geom_col(position = "dodge2") +
+  labs(x = NULL ,y = "Percent", fill = "Religion") +
+  guides(fill = FALSE) + # turns off the legend
+  coord_flip() + # flips the co-ordinates of the plot i.e. swaps the axes (religion and pct)
+  facet_grid(~ bigregion)
+
+# QUESTION: in your opinion, which of the plots communicates the underlying patterns best (p1a, p1b, p2 or p3)?
+# Remember, you can view a plot by calling its object name:
+p1a
+
+
+# 5.5 Continuous data
+
+# Let's apply the piping and plotting techniques to a different data set: organdata
+# The data set contains more than a decade’s worth of information on the donation of organs for transplants in seventeen OECD countries.
+
+organdata
+glimpse(organdata)
+
+# Let's explore a subset of the data set:
+organdata %>% select(1:6) %>% sample_n(size = 20)
+organdata %>% select(country, year, gdp) %>% sample_n(size = 5)
+
+# TASK: describe the results of the above commands.
+
+# TASK: produce a scatterplot of the mean number of organ donors by year and interpret the results.
+
+# Let's explore country-level variation in the mean number of organ donors:
+p <- ggplot(data = organdata, mapping = aes(x = country, y = donors))
+
+p + geom_boxplot() +
+  coord_flip() # pretty good but the lack of a suitable ordering makes it difficult to compare countries
+
+p <- ggplot(data = organdata, 
+            mapping = aes(x = reorder(country, donors, na.rm=TRUE), y = donors))
+
+p + geom_boxplot() +
+  coord_flip() +
+  labs(x = NULL)
+
+# QUESTION: what is the meaning of each component of the reorder() function?
+
+# reorder() automatically calculates the mean of the second variable in the function.
+# TASK: recreate the above boxplot but specify a different summary statistic (e.g. the median, 95th percentile, max etc)
+# NB DMD: figure out how to perform the above TASK
+
+p <- ggplot(data = organdata, 
+            mapping = aes(x = reorder(country, donors, na.rm=TRUE), 
+                          y = donors, fill = world))
+
+p + geom_boxplot() +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(legend.position = "top")
+
+# It is usually good practice to plot the distribution of categorical variables on the y axis.
+# It's been interesting to look at the boxplot distribution of donors but perhaps we can
+# make things simpler by focusing on a single value for this variable.
+
+# First, create a summary table of the variables we want to plot:
+country_analysis <- organdata %>% group_by(consent_law, country) %>%
+  summarise(donors_mn = mean(donors, na.rm = TRUE),
+            donors_sd = sd(donors, na.rm = TRUE),
+            gdp_mn = mean(gdp, na.rm = TRUE))
+
+country_analysis
+
+# TASK: describe the logic and results of the above piping command.
+
+# Second, plot the summary table
+p <- ggplot(data = country_analysis, 
+            mapping = aes(x = reorder(country, donors_mn),
+                          y = donors_mn, color = consent_law))
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  labs(x = NULL, y = "Number of donors (mean)", color = "Consent law") +
+  theme(legend.position = "top")
+
+# QUESTION: are there meaningful country-level differences in the mean number of organ donors?
+# what about by countries with different consent laws?
+
+# Well done, you have combined data wrangling skills with clear, sophisticated plotting specifications
+# to produce an effective visualisation: a Cleveland dotplot. However, there is always room for improvement...
+# Let's rationalise the code that produced our summary table:
+country_analysis <- organdata %>% group_by(consent_law, country) %>%
+  summarise_if(is.numeric, funs(mean, sd, median), na.rm = TRUE)
+
+country_analysis
+str(country_analysis)
+View(country_analysis)
+
+# TASK: describe the logic and results of the new 'country_analysis' piping command.
+
+# The next improvement we can make is to produce separate plots by the 'consent_law' variable:
+p <- ggplot(data = country_analysis, 
+            mapping = aes(x = reorder(country, donors_mean),
+                          y = donors_mean)) # remember the names changed when we allowed R to create the variables
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law)
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") # side-by-side is not very legible; this can be fixed by using the 'ncol' argument as part of facet_wrap()
+
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1)
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") # repetiion of country names across panels; we need to free the y axis to select its own values
+
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1, scales = "free_y")
+labs(x = "Number of donors (mean)", y = NULL) +
+  theme(legend.position = "top") 
+
+# TASK: play around with 'ncol' and 'scales' options.
+
+# As intelligent analysts, you may be critical of the above graph: "Instructor, what use is a
+# point estimate without some knowledge of its variance or error?"
+# Well my learned friends, ggplot() provides just the geom:
+x11()
+p + geom_pointrange(mapping = aes(ymin = donors_mean - donors_sd, ymax = donors_mean + donors_sd)) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1, scales = "free_y")
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") 
+
+# TASK: adjust the axis labels to remove the defaulting labelling.
+
+
+### END OF ACTIVITY FIVE [ACT005] ###
+
+
+
+##############################################
+
+
+##############################################
 
 
 
@@ -1947,7 +2315,7 @@ p + geom_freqpoly()
 
 # An area plot is analogous to a stacked bar chart and is used to show how the composition of something varies over a range.
 
-# For example, how much of total income is accounted for by the largest charities, and has the composition varied over time?
+# For example, how much of total sector income is accounted for by the largest charities, and has the composition varied over time?
 
 char_fin <- read_csv("./data_raw/extract_financial.csv") # load in charity financial records
 names(char_fin)
@@ -1978,7 +2346,7 @@ p <- ggplot(data = char_fin_sum, mapping = aes(x = year, y = income, fill = inc_
 x11()
 p + geom_area()
 
-# Total income has risen over time and it looks as if the largest charities have preserved their share of total income.
+# Total income has risen over time (in absolute terms) and it looks as if the largest charities have preserved their share of total income.
 
 
 # 7.1.3 geom_tile()
@@ -1998,12 +2366,142 @@ diamonds %>%
 
 # 7.2 Customisation
 
+# 7.2.1 Using colour effectively via the scale() function
 
-# 7.4 Bits and Bobs
+# We spoke earlier in the workshop about using colours intelligently. For example,
+# the categories of an unordered categorical variable require distinct colours, while
+# an ordered variable is better served by the use of gradation.
+
+# The default options of ggplot() are usually appropriate but we may want to specify our
+# own preferences via the scale() function and the RColorBrewer package.
+
+# Let's explore different colour palettes using the organdata data set:
+install.packages("RColorBrewer")
+library(RColorBrewer)
+
+x11()
+display.brewer.all() # view the palettes available via RColorBrewer
+
+# Notice we have three types of palettes:
+# 1. Sequential
+# 2. Qualitative
+# 3. Divergent
+
+p <- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors, color = world))
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Pastel2") +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "top")
+
+# TASK: use different palettes with the above graphs; which is best for converying differences
+# between types of countries?
+
+# It is possible to create your own colour palettes in R; see this article for more information:
+# [https://data.library.virginia.edu/setting-up-color-palettes-in-r/]
+
+
+# 7.2.2 Changing the appearance of a graph via the theme() function
+
+# Combining ggplot() and the theme() function grants us considerable flexibility in how
+# we construct the design elements of the plot. It also allows us to adopt standardised
+# themes for our graphs e.g. Economist or Wall Street Journal graphics.
+
+# First things first: let's get rid of the awful grey grid background of our graphs...
+
+p <- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors, color = world))
+
+p + geom_point(size = 2) +
+  theme_bw() +
+  theme(legend.position = "top",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) # the "panel.grid.minor" option removes the grid lines from the plot
+
+p + geom_point(size = 2) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) +
+  theme_grey() +
+  theme(legend.position = "top")
+
+# Let's load in some new themes and apply them:
+
+install.packages("ggthemes")
+library(ggthemes)
+
+p + geom_point(size = 2) +
+  theme_economist() +
+  theme(legend.position = "top")
+
+# It is also possible to adjust the default options associated with a theme:
+p + geom_point(size = 2) +
+  theme_economist() +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 30)) # adjust the size of the legend title
+
+# "Flashy" themes like the Economist or WSJ are all well and good for one-off posters etc
+# but you may want to focus on plainer plots for academic publications. The cowplot package
+# provides a theme suitable for such publications.
+
+install.packages("cowplot")
+library(cowplot)
+?cowplot # the help documentation is not very useful!
+
+p + geom_point(size = 2) +
+  theme_cowplot() +
+  theme(legend.position = "top")
+
+
+# Finally, my favourite theme: BBC graphics
+
+devtools::install_github('bbc/bbplot') # install BBC graphics package; you may get a prompt to update other packages - just ignore by pressing enter in the console window
+
+library(bbplot)
+library(gapminder)
+library(tidyverse)
+
+line_df <- gapminder %>%
+  filter(country == "Malawi") # restrict observations to Malawi
+
+line <- ggplot(line_df, aes(x = year, y = lifeExp)) +
+  geom_line(colour = "#1380A1", size = 1) +
+  geom_hline(yintercept = 0, size = 1, colour="#333333") +
+  bbc_style() +
+  labs(title="Living longer",
+       subtitle = "Life expectancy in Malawi 1952-2007")
+
+x11()
+line # display the plot
+
+# bbplot also contains a function for saving and refining your graph:
+finalise_plot(plot_name = line,
+              source = "Source: Gapminder",
+              save_filepath = "./figures/malawi_life-exp_1952-2007.png",
+              width_pixels = 640,
+              height_pixels = 450)
+
+# If you reach the end of this activity with time to spare, then we suggest reading through
+# further examples of how to use bbplot's functions: [https://bbc.github.io/rcookbook/]
+
+
+
+# 7.3 Bits and Bobs
 
 # Let's take a quick look at some other useful tips and tricks when plotting data.
 
-# 7.4.1 Focusing on a particular area of a graph 
+
+# 7.3.1 Focusing on a particular area of a graph 
 
 # We can zoom in on a plot using coord_cartesian():
 contdata <- gapminder %>%
@@ -2026,7 +2524,7 @@ p + geom_point() + ylim(0, 50) # this removes observations with values outwith t
 # Of course, you can always filter your data to produce a subset of observations in a desired range.
 
 
-# 7.4.2 Dealing with two y-axes
+# 7.3.2 Dealing with two y-axes
 
 # It's usually not good practice to plot lines representing different time series on two axes - 
 # there is too much potential for misleading e.g. altering the y scales to display an
@@ -2036,8 +2534,21 @@ p + geom_point() + ylim(0, 50) # this removes observations with values outwith t
 # - display the line graphs side-by-side (i.e. use faceting)
 # - create an index of each time series and plot both lines on the same y-axis
 
-# To see this in ploy in action (deliberately), spend a few minutes on 
+# To see this ploy in action (deliberately), spend a few minutes on 
 # Tyler Vigen's website "Spurious Correlations" [http://www.tylervigen.com/spurious-correlations]
+
+
+### END OF ACTIVITY SEVEN [ACT007] ###
+
+# If you've finished ahead of time then please use this opportunity to revisit
+# troublesome topics/commands and ask the tutors plenty of questions.
+
+
+##############################################
+
+
+##############################################
+
 
 
 # Final Thoughts #
@@ -2075,499 +2586,3 @@ p + geom_point() + ylim(0, 50) # this removes observations with values outwith t
 
 ########################################### FIN ##################################################
 
-
-
-
-
-# 7.3.1 Using colour effectively via the scale() function
-
-# We spoke earlier in the workshop about using colours intelligently. For example,
-# the categories of an unordered categorical variable require distinct colours, while
-# an ordered variable is better served by the use of gradation.
-
-# The default options of ggplot() are usually appropriate but we may want to specify our
-# own preferences via the scale() function and the RColorBrewer package.
-
-# Let's explore different colour palettes using the organdata data set:
-install.packages("RColorBrewer")
-library(RColorBrewer)
-
-x11()
-display.brewer.all() # view the palettes available via RColorBrewer
-# Notice we have three types of palettes:
-# 1. Sequential
-# 2. Qualitative
-# 3. Divergent
-
-p <- ggplot(data = organdata,
-            mapping = aes(x = roads, y = donors, color = world))
-
-p + geom_point(size = 2) + scale_color_brewer(palette = "Set2") +
-  theme(legend.position = "top")
-
-p + geom_point(size = 2) + scale_color_brewer(palette = "Pastel2") +
-  theme(legend.position = "top")
-
-p + geom_point(size = 2) + scale_color_brewer(palette = "Dark2") +
-  theme(legend.position = "top")
-
-# TASK: use different palettes with the above graphs; which is best for converying differences
-# between types of countries?
-
-# It is possible to create your own colour palettes in R; see this article for more information:
-# https://data.library.virginia.edu/setting-up-color-palettes-in-r/
-
-
-# 7.3.2 Changing the appearance of a graph via the theme() function
-
-# Combining ggplot() and the theme() function grants us considerable flexibility in how
-# we construct the design elements of the plot. It also allows us to adopt standardised
-# themes for our graphs e.g. Economist or Wall Street Journal graphics.
-
-# First things first: let's get rid of the awful grey grid background of our graphs...
-p <- ggplot(data = organdata,
-            mapping = aes(x = roads, y = donors, color = world))
-
-p + geom_point(size = 2) +
-  theme_bw() +
-  theme(legend.position = "top",
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank())
-
-p + geom_point(size = 2) +
-  theme_minimal() +
-  theme(legend.position = "top")
-
-p + geom_point(size = 2) +
-  theme_classic() +
-  theme(legend.position = "top")
-
-p + geom_point(size = 2) +
-  theme_grey() +
-  theme(legend.position = "top")
-
-# Let's load in some new themes and apply them:
-install.packages("ggthemes")
-library(ggthemes)
-
-p + geom_point(size = 2) +
-  theme_economist() +
-  theme(legend.position = "top")
-
-# It is also possible to adjust the default options associated with a theme:
-p + geom_point(size = 2) +
-  theme_economist() +
-  theme(legend.position = "top",
-        legend.title = element_text(size = 30)) # adjust the size of the legend title
-
-# "Flashy" themes like the Economist or WSJ are all well and good for one-off posters etc
-# but you may want to focus on plainer plots for academic publications. The cowplot package
-# provides a theme suitable for such publications.
-install.packages("cowplot")
-library(cowplot)
-?cowplot # the help documentation is not very useful!!!
-
-p + geom_point(size = 2) +
-  theme_cowplot() +
-  theme(legend.position = "top")
-
-
-
-
-
-
-# 7.1 Summarising data
-# It is usually more awkward and time consuming to rely on geom stat_() functions to summarise our variables
-# during the graphing process. It is better to get into the habit of preparing our data in advance of plotting,
-# using the very handy 'dplyr' package that comes with the 'tidyverse' distribution.
-
-# For example, say we want to plot the results of a frequency table:
-library(socviz) # load in socviz suite of data sets and other resources
-library(tidyverse) # load in tidyverse suite of packages
-
-gss_sm
-str(gss_sm)
-glimpse(gss_sm)
-
-table(gss_sm$bigregion, gss_sm$religion) # crosstab of our two variables of interest
-
-# To build our summary table, we need to perform a sequence of tasks on our data set
-# using the pipe operator %>%.
-# Think of this process as taking data as an input, transferring it into some functions,
-# and being converted into some results (like a pipeline). In the words of Healy (2019):
-# "A pipeline is typically a series of operations that do one or more of four things:
-#   1. Group the data into the nested structure we want for our summary, such as “Religion by Region” or “Authors by Publications by Year”.
-#   2. Filter or select pieces of the data by row, column, or both. This gets us the piece of the table we want to work on.
-#   3. Mutate the data by creating new variables at the current level of grouping. This adds new columns to the table without aggregating it.
-#   4. Summarize or aggregate the grouped data. This creates new variables at a higher level of grouping. For example we might calculate means with mean() or counts with n(). This results in a smaller, summary table, which we might do more things on if we want."
-
-vignette("dplyr") # explore some use cases employing the 'dplyr' commands
-
-# Let's create a crosstab of religion by region:
-rel_by_reg <- gss_sm %>% 
-  group_by(bigregion, religion) %>%
-  summarize(N = n()) %>%
-  mutate(freq = N / sum(N), pct = round((freq*100), 0))
-
-View(rel_by_reg) # display the summary table we created
-
-# There's a lot going on in the above command, so let's take it piece-by-piece:
-#   1. we create a new object
-#   2. state which data set we are wanting to use
-#   3. take that data and group it by region and religion (similar to the table() command earlier)
-#   4. summarise this table by creating a new column (N) which is a count of observations
-#   5. create two new variables: proportion and percentage of observations in each category
-
-# If you were apprehensive about learning or using R, the above command is a valid reason:
-# it is more cumbersome than performing the same task in Stata or SPSS, and requires us
-# to explicitly delineate the logic and steps of producing the summary table.
-
-# There are user-written packages that can produce crosstabs more efficiently than the above
-# method (e.g. 'crosstab' from the 'descr' package) but using the pipe operator in this
-# way is a very common task in R and you just have to get used to it :)
-
-# TASK: play around with the pipe command we specified (i.e rel_by_reg etc);
-# try removing layers starting at the bottom - how does that effect the final table?
-
-# Let's check if the percentages sum to 100 in our summary table:
-sanity_check <- rel_by_reg %>%
-  group_by(bigregion) %>%
-  summarise(total = sum(pct))
-
-sanity_check # some rounding errors but pretty much correct
-
-# Let's plot the rel_by_reg object:
-p1 <- ggplot(data = rel_by_reg, mapping = aes(x = bigregion, y = pct, fill = religion))
-
-p1a + geom_col() +
-  labs(x = "Region",y = "Percent", fill = "Religion") +
-  theme(legend.position = "top") # not bad at all, but let's stack the bars side-by-side:
-
-p1b + geom_col(position = "dodge2") +
-  labs(x = "Region",y = "Percent", fill = "Religion") +
-  theme(legend.position = "top")
-
-# QUESTION: why did we use geom_col() instead of geom_bar()?
-
-# I think we can do better; let's swap the x and y axes:
-p2 <- ggplot(data = rel_by_reg, mapping = aes(x = pct, y = bigregion, fill = religion))
-
-p2 + geom_col(position = "dodge2") +
-  labs(x = "Region",y = "Percent", fill = "Religion") +
-  theme(legend.position = "top") # ehh...
-
-# geom_col has an internal logic that prevents simply swapping the axes in the mapping function.
-# Thankfully there is another way:
-p3 <- ggplot(data = rel_by_reg, mapping = aes(x = religion, y = pct, fill = religion))
-
-p3 + geom_col(position = "dodge2") +
-  labs(x = NULL ,y = "Percent", fill = "Religion") +
-  guides(fill = FALSE) + # turns off the legend
-  coord_flip() + # flips the co-ordinates of the plot i.e. swaps the axes (religion and pct)
-  facet_grid(~ bigregion)
-
-#QUESTION: in your opinion, which of the plots communicates the underlying patterns best (p1a, p1b, p2 or p3)?
-
-
-# 6.2 Continuous data
-
-# Let's apply the piping and plotting techniques to a different data set: organdata
-# The data set contains more than a decade’s worth of information on the donation of organs for transplants in seventeen OECD countries.
-
-organdata
-glimpse(organdata)
-
-# Let's explore a subset of the data set:
-organdata %>% select(1:6) %>% sample_n(size = 20)
-organdata %>% select(country, year, gdp) %>% sample_n(size = 5)
-
-# TASK: describe the results of the above commands.
-
-# TASK: produce a scatterplot of the mean number of organ donors by year and interpret the results.
-
-# Let's explore country-level variation in the mean number of organ donors:
-p <- ggplot(data = organdata, mapping = aes(x = country, y = donors))
-
-p + geom_boxplot() +
-  coord_flip() # pretty good but the lack of a suitable ordering makes it difficult to compare countries
-
-p <- ggplot(data = organdata, 
-            mapping = aes(x = reorder(country, donors, na.rm=TRUE), y = donors))
-
-p + geom_boxplot() +
-  coord_flip() +
-  labs(x = NULL)
-
-# QUESTION: what is the meaning of each component of the reorder() function?
-
-# reorder() automatically calculates the mean of the second variable in the function.
-# TASK: recreate the above boxplot but specify a different summary statistic (e.g. the median, 95th percentile, max etc)
-# NB DMD: figure out how to perform the above TASK
-
-p <- ggplot(data = organdata, 
-            mapping = aes(x = reorder(country, donors, na.rm=TRUE), 
-                          y = donors, fill = world))
-
-p + geom_boxplot() +
-  coord_flip() +
-  labs(x = NULL) +
-  theme(legend.position = "top")
-
-# It is usually good practice to plot the distribution of categorical variables on the y axis.
-# It's been interesting to look at the boxplot distribution of donors but perhaps we can
-# make things simpler by focusing on a single value for this variable.
-
-# First, create a summary table of the variables we want to plot:
-country_analysis <- organdata %>% group_by(consent_law, country) %>%
-  summarise(donors_mn = mean(donors, na.rm = TRUE),
-            donors_sd = sd(donors, na.rm = TRUE),
-            gdp_mn = mean(gdp, na.rm = TRUE))
-
-country_analysis
-
-# TASK: describe the logic and results of the above piping command.
-
-# Second, plot the summary table
-p <- ggplot(data = country_analysis, 
-            mapping = aes(x = reorder(country, donors_mn),
-                          y = donors_mn, color = consent_law))
-
-p + geom_point(size = 4) +
-  coord_flip() +
-  labs(x = NULL, y = "Number of donors (mean)", color = "Consent law") +
-  theme(legend.position = "top")
-
-# QUESTION: are there meaningful country-level differences in the mean number of organ donors?
-# what about by countries with different consent laws?
-
-# Well done, you have combined data wrangling skills with clear, sophisticated plotting specifications
-# to produce an effective visualisation: a Cleveland dotplot. However, there is always room for improvement...
-# Let's rationalise the code that produced our summary table:
-country_analysis <- organdata %>% group_by(consent_law, country) %>%
-  summarise_if(is.numeric, funs(mean, sd, median), na.rm = TRUE)
-
-country_analysis
-str(country_analysis)
-View(country_analysis)
-
-# TASK: describe the logic and results of the new 'country_analysis' piping command.
-
-# The next improvement we can make is to produce separate plots by the 'consent_law' variable:
-p <- ggplot(data = country_analysis, 
-            mapping = aes(x = reorder(country, donors_mean),
-                          y = donors_mean)) # remember the names changed when we allowed R to create the variables
-
-p + geom_point(size = 4) +
-  coord_flip() +
-  facet_wrap(~ consent_law)
-labs(x = NULL, y = "Number of donors (mean)") +
-  theme(legend.position = "top") # side-by-side is not very legible; this can be fixed by using the 'ncol' argument as part of facet_wrap()
-
-
-p + geom_point(size = 4) +
-  coord_flip() +
-  facet_wrap(~ consent_law, ncol = 1)
-labs(x = NULL, y = "Number of donors (mean)") +
-  theme(legend.position = "top") # repetiion of country names across panels; we need to free the y axis to select its own values
-
-
-p + geom_point(size = 4) +
-  coord_flip() +
-  facet_wrap(~ consent_law, ncol = 1, scales = "free_y")
-labs(x = "Number of donors (mean)", y = NULL) +
-  theme(legend.position = "top") 
-
-# TASK: play around with 'ncol' and 'scales' options.
-
-# As intelligent analysts, you may be critical of the above graph: "Instructor, what use is a
-# point estimate without some knowledge of its variance or error?"
-# Well my learned friends, ggplot() provides just the geom:
-x11()
-p + geom_pointrange(mapping = aes(ymin = donors_mean - donors_sd, ymax = donors_mean + donors_sd)) +
-  coord_flip() +
-  facet_wrap(~ consent_law, ncol = 1, scales = "free_y")
-labs(x = NULL, y = "Number of donors (mean)") +
-  theme(legend.position = "top") 
-
-# TASK: adjust the axis labels to remove the defaulting labelling.
-
-
-
-
-
-
-
-
-# 7. Working with Data #
-# Getting data into the right shape for plotting. [ADD SOME OF THIS MATERIAL TO THE BEGINNING]
-
-
-# 8. Refining Plots #
-
-# 8.1 Plotting text
-
-library(gapminder)
-gapminder
-glimpse(gapminder)
-
-table(gapminder$continent)
-levels(gapminder$continent)
-
-# Let's examine life expectancy
-lexp_analysis <- gapminder %>%
-  filter(pop < 5000000) %>%
-  group_by(country) %>%
-  summarise(lexp_mean = mean(lifeExp, na.rm = TRUE),
-            pop_mean = mean(pop, na.rm = TRUE))
-
-# TASK: describe what the above piping command is doing.
-
-p <- ggplot(data = lexp_analysis,
-            mapping = aes(x = pop_mean, y = lexp_mean))
-
-x11()
-p + geom_point() + geom_text(mapping = aes(label = country)) # doesn't look great; let's make some tweaks
-
-p + geom_point() + geom_text(mapping = aes(label = country), hjust = 0) # right-justify the text
-
-# The default geom_text() function is a bit awkward to use; better to employ a user-written package called ggrepel()
-install.packages("ggrepel")
-library(ggrepel)
-
-# U.S. presidential election results 1824-2016
-elections_historic
-str(elections_historic)
-
-elections_historic %>% select(2:7, 10) # examine a subset of the variables and rows
-
-# Let's produce a scatterplot of win share of the popular vote and electoral college vote
-# First, define some objects to store the labels
-p_title <- "Presidential Elections: Popular & Electoral College Margins"
-p_subtitle <- "1824-2016"
-p_caption <- "Data for 2016 are provisional."
-x_label <- "Winner's share of Popular Vote"
-y_label <- "Winner's share of Electoral College Votes"
-
-# Second, define the data and variables
-p <- ggplot(elections_historic, aes(x = popular_pct, y = ec_pct,
-                                    label = winner_label))
-
-# Third, produce the plot
-x11()
-p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
-  geom_vline(xintercept = 0.5, size = 1.4, color = "gray80") +
-  geom_point() +
-  geom_text_repel() +
-  scale_x_continuous(labels = scales::percent) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
-       caption = p_caption)
-
-# QUESTION: what can you conclude (if anything) about the relationship between popular and electoral college win shares?
-# TASK: search for help on the geom_text_repel() function; play around the with above graph by altering the each element.
-
-# 8.2. Labelling outliers
-
-# Sometimes we just want to highlight particular data points or cases. We can use geom_text_repel()
-# to do this by telling it to use a subset of the data:
-x11()
-p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
-  geom_vline(xintercept = 0.5, size = 1.4, color = "gray80") +
-  geom_point() +
-  geom_text_repel(data = subset(elections_historic, popular_pct < .5 & ec_pct > .7)) +
-  scale_x_continuous(labels = scales::percent) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
-       caption = p_caption)
-
-# TASK: describe the effect of the addition of subset() to the plot.
-
-# An alternative approach is to create an indicator (dummy) variable and subset by it.
-
-# 8.3. Writing and drawing in the plot area
-
-# Sometimes we are interested in adding our own annotations to the graph, perhaps to 
-# pick out surprising data points or to add some commentary to the patterns observed.
-
-x11()
-p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
-  geom_vline(xintercept = 0.5, size = 1.4, color = "gray80") +
-  geom_point() +
-  annotate(geom = "text", x = .35, y = .45, label = "The unpopular quadrant", hjust = 0) +
-  scale_x_continuous(labels = scales::percent) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
-       caption = p_caption)
-
-# TASK: describe the logic and results of the annotate() function.
-
-# We can also draw shapes on the plot:
-x11()
-p + geom_hline(yintercept = 0.5, size = 1.4, color = "gray80") +
-  geom_vline(xintercept = 0.5, size = 1.4, color = "gray80") +
-  geom_point() +
-  annotate(geom = "rect", xmin = .60, xmax = .65, ymin = .80, ymax = .99, fill = "blue", alpha = .3)
-scale_x_continuous(labels = scales::percent) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
-       caption = p_caption)
-
-
-
-
-
-
-# Combining Individual Plots #
-
-
-# Color Considerations #
-
-# Select a different colour palette:
-ggplot(data = auto) + 
-  geom_point(mapping = aes(x =auto$price, y = auto$mpg, shape = auto$foreign, color = factor(auto$rep78))) +
-  scale_color_brewer(palette = "Spectral")
-# QUESTION: what did we need to add the factor prefix to auto$rep78; what happens if you remove the prefix?
-
-
-# Labelling Plots #
-
-ggplot(data = auto) + 
-  geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4) +
-  labs(x = "Miles Per Gallon (MPG)", y = "No. of observations",
-       title = "Fuel Efficiency", fill = "Region of Origin")
-
-# TASK: create a scatter plot of two numeric variable and distinguish observations by a 
-# third variable using the colour option. Add appropriate labels (hint: replace fill with colour
-# in the above graph to change the text).
-
-
-# Storing and Reusing Plots #
-
-# Helpfully, R allows us to save the results of a plot as an object.
-plt1 <- ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4)
-plt1
-# This approaches comes in useful when combining different plots in a single visualisation.
-
-
-# Final Thoughts #
-
-# Congratulations on progressing through the workshop. Our aim was to equip you with a proficiency in data visualisation using R as rapidly and painlessly as possible.
-# While you have covered a great deal of material and skills, there is a bigger and badder world of R programming and graphing out there.
-# Here are some suggestions for where you might go next in your skills development:
-#	- Wanting to delve deeper into ggplot2? Consult ggplot2: Elegant Graphics for Data Analysis [https://www.amazon.com/dp/331924275X/ref=cm_sw_su_dp]	
-#
-#	- Looking for new plot types? Check out [https://www.ggplot2-exts.org/], which keeps track of ggplot2 extensions developed by R users.
-#	(They even have a theme that makes your R plots look like Stata graphs, in case you're having withdrawal symptoms)
-
-#	- We didn't cover an increasingly prominent area of data visualisation: graphing spatial data.
-#		o Chapter 7 of Data Visualization: A Practical Introduction demonstrates how to use ggplot for drawing maps [http://socviz.co/maps.html#maps]
-#		o The U.K. Consumer Data Research Centre (CDRC) provides introductory material on using R for working with spatial data [https://data.cdrc.ac.uk/dataset/an-introduction-to-spatial-data-analysis-and-visualisation-in-r]
-
-#	- Data management is the most time consuming (and IMO, difficult) aspect of quantitative data analysis. There are some good (sometimes free) resources
-#	that will help you develop your proficiency in this crucial task:
-#		o R for Data Science [https://r4ds.had.co.nz]
-#		o R Programming for Data Science [https://www.cs.upc.edu/~robert/teaching/estadistica/rprogramming.pdf]
-#		o Data Wrangling with R [https://leanpub.com/datawranglingwithr]
-
-
-################################################## FIN ##################################################
