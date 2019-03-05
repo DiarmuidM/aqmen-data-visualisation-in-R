@@ -10,7 +10,10 @@ Tufte, E. (2001) The Visual Display of Quantitative Information. [https://www.am
 _A must read for anyone looking to understand the data and design elements of producing visualisations of quantitative information._
 
 McCandless, D. (2012) Information is Beautiful. [https://www.amazon.co.uk/Information-Beautiful-New-David-McCandless/dp/0007492898](https://www.amazon.co.uk/Information-Beautiful-New-David-McCandless/dp/0007492898) <br>
-_Provides vivid examples of visualisations of real-world issues and topics._ 
+_Provides vivid examples of visualisations of real-world issues and topics._
+
+BBC. (2019) How the BBC Visual and Data Journalism team works with graphics in R. [https://medium.com/bbc-visual-and-data-journalism/how-the-bbc-visual-and-data-journalism-team-works-with-graphics-in-r-ed0b35693535](https://medium.com/bbc-visual-and-data-journalism/how-the-bbc-visual-and-data-journalism-team-works-with-graphics-in-r-ed0b35693535) <br>
+_A short overview of how the BBC combines R and an efficient workflow to produce its data visualisations._
 
 #### R
 
@@ -23,6 +26,15 @@ _Everything you need to know (and more) regarding R's ggplot2 package._
 Wickham, H. and Grolemund, G. (2017) R for Data Science: Visualize, Model, Transform, Tidy, and Import Data.
 [https://r4ds.had.co.nz/index.html](https://r4ds.had.co.nz/index.html) <br>
 _A thorough handbook for conducting data wrangling, visualisation and analysis in R._
+
+#### Workflow
+
+Gayle, V.J. and Lambert, P.S. (2017) The Workflow: A Practical Guide to Producing Accurate, Efficient, Transparent and Reproducible Social Survey Data Analysis. NCRM Working Paper. NCRM.
+[http://eprints.ncrm.ac.uk/4000/](http://eprints.ncrm.ac.uk/4000/) <br>
+_A practical guide to the data analysis workflow._
+
+Newport, C. (2016) Deep Work: Rules for Focused Success in a Distracted World. [http://calnewport.com/books/deep-work/](http://calnewport.com/books/deep-work/) <br>
+_A compelling strategy for organising your knowledge-intensive work._
 
 ### Online Resources:
 
