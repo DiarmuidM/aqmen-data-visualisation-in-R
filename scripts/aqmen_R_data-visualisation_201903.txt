@@ -2554,7 +2554,7 @@ p + geom_point() + ylim(0, 50) # this removes observations with values outwith t
 # Final Thoughts #
 
 # Congratulations on progressing through the workshop. Our aim was to equip you, as rapidly and painlessly as possible,
-# with a proficiency in data visualisation using R .
+# with a proficiency in data visualisation using R.
 
 # While you have covered a great deal of material and skills, there is a bigger and badder world of R programming and visualisation out there.
 
