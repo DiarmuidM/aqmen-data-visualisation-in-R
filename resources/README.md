@@ -9,6 +9,9 @@ The following are suggested books, papers and resources for developing your data
 Tufte, E. (2001) The Visual Display of Quantitative Information. [https://www.amazon.co.uk/Visual-Display-Quantitative-Information/dp/1930824130](https://www.amazon.co.uk/Visual-Display-Quantitative-Information/dp/1930824130) <br>
 _A must read for anyone looking to understand the data and design elements of producing visualisations of quantitative information._
 
+Kirk, A. (2016) Data Visualisation: A Handbook for Data Driven Design. [http://www.visualisingdata.com/book/](http://www.visualisingdata.com/book/) <br>
+_An interesting and comprehensive overview of the data visualisation design process._
+
 McCandless, D. (2012) Information is Beautiful. [https://www.amazon.co.uk/Information-Beautiful-New-David-McCandless/dp/0007492898](https://www.amazon.co.uk/Information-Beautiful-New-David-McCandless/dp/0007492898) <br>
 _Provides vivid examples of visualisations of real-world issues and topics._
 
