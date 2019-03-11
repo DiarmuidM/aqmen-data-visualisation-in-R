@@ -52,6 +52,11 @@ _An overview of how to interleave code, results and narrative information in a s
 Data Visualization with ggplot2. [https://www.datacamp.com/courses/data-visualization-with-ggplot2-1](https://www.datacamp.com/courses/data-visualization-with-ggplot2-1) <br>
 _DataCamp offer a multitude of courses on R, data visualisation and data science, some of which are free._
 
+#### Guidance and Code
+
+Institute for Digital Research and Education (IDRE), UCLA. [https://stats.idre.ucla.edu/r/](https://stats.idre.ucla.edu/r/) <br>
+_Excellent range of articles and code examples for data wrangling and analysis in R._
+
 #### Cheat sheets
 
 RStudio Cheatsheets. [https://www.rstudio.com/resources/cheatsheets/](https://www.rstudio.com/resources/cheatsheets/) <br>
