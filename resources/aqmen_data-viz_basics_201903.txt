@@ -1,0 +1,9 @@
+WIFI: InTuition-Guest
+PASSWORD: 1ntu1tion
+
+COMPUTER PASSWORD: int2010
+
+MACHINE: Desktop/aqmen_training/data_viz_2019
+
+SOFTWARE: Anaconda Navigator
+
