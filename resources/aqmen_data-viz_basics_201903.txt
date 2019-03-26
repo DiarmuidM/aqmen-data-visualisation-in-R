@@ -1,5 +1,5 @@
 WIFI: InTuition-Guest
-PASSWORD: 1ntu1tion
+PASSWORD: 1ntu1t1on
 
 COMPUTER PASSWORD: int2010
 

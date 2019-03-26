@@ -168,7 +168,7 @@ file.info("./data_raw/sampdata.csv") # displays some basic file information
 
 # 0.2 Installing Packages #
 
-# The real power of using R for data wrangling, visualisation and analysis comes from the universe of user-written packages that are available.
+# The real power of using R for data wrangling and analysis comes from the universe of user-written packages that are available.
 # A package bundles together code, data, documentation, and tests and provides an easy method to share with others.
 
 # Packages represent both a blessing and a curse: a blessing because it is unlikely you won't be able to find a function you need for your analysis;
@@ -176,6 +176,13 @@ file.info("./data_raw/sampdata.csv") # displays some basic file information
 # help documentation is wildly inconsistent across packages. 
 
 # A package only needs to be installed once, but you will need to load it in every time you launch an R session.
+
+.libPaths() # check which folder the packages are downloaded to
+
+# If you see two folders then you can tell R which one you would like to use:
+
+.libPaths("C:/Users/mcdonndz-local/Documents/R/win-library/3.5") # my personal machine's location
+# Now any packages will be downloaded to the above folder.
 
 my_packages <- c("tidyverse", "broom", "car", "expss", "coefplot", "cowplot",
                  "gapminder", "GGally", "ggrepel", "ggridges", "gridExtra",
@@ -195,24 +202,49 @@ installed.packages() # check which packages have been installed
 # 0.3 Loading Packages #
 
 library(tidyverse) # load in the "tidyverse" package of data wrangling functions
-?tidyverse
-vignette("tidyverse")
+?tidyverse # view help documentation for the "tidyverse"
 
-# TASK: load in the "car" and "expss" packages. The rest will be loaded in as we progress.
+library(broom)
+library(car)
+library(expss)
+library(coefplot)
+library(cowplot)
+library(gapminder)
+library(GGally)
+library(ggrepel)
+library(ggridges)
+library(gridExtra)
+library(here)
+library(interplot)
+library(lubridate)
+library(margins)
+library(maps)
+library(mapproj)
+library(mapdata)
+library(MASS)
+library(quantreg)
+library(rlang)
+library(scales)
+library(survey)
+library(srvyr)
+library(viridis)
+library(viridisLite)
+library(devtools)
+library(socviz)
+
+# NB!
+# Here is the most important point regarding installing and loading packages:
+
+# 1. You only need to install a package ONCE on your machine.
+# 2. You need to load it EVERY time you launch RStudio.
+
+# If you repeatedly install packages then R gets a bit confused as to where the packages should be located.
+
 
 # A final note about packages: you'll see mention of performing functions or tasks using base R. This means drawing on the functions that come
-# as standard with your version of R. install.packages() and write.csv() are examples of base R functions.
+# as standard with your version of R. install.packages() and mean() are examples of base R functions.
 
-# For the purposes of data wrangling (and most other data analysis tasks, frankly), we will not use base R functions; the reasons will become clear
-# as we progress but it is worth noting that there is more than one way to skin a cat.
 
-# New R functions used in this section:
-
-#	- install.packages() - install R packages
-#	- installed.packages() - display installed R packages
-#	- .libPaths() - display directory of installed R packages
-#	- library() - load in R package
-#	- vignette() - view examples of how to use the function/package (not available for all functions/packages)
 
 ##############################################
 
@@ -220,7 +252,7 @@ vignette("tidyverse")
 ##############################################
 
 
-# 1. Getting Started with R [ACT001] #
+# 1. Getting Started with R #
 
 # R is a programming language. It has rules, packages, syntax, complexities, idiosyncracies...
 # It is not particularly easy to learn, nevermind master. It can seem as if you have to learn everything in order
@@ -244,8 +276,8 @@ vignette("tidyverse")
 
 This should be a comment and not code.
 Excuse me, did you hear me?
-HELLLOOOO!
-How rude...
+  HELLLOOOO!
+  How rude...
 
 
 # 1.2 Writing Code #
@@ -320,8 +352,6 @@ int_var <- as.integer(int_var)
 print(typeof(int_var))
 
 # Vectors
-
-# Vectors provide a means of structuring data types as a list
 
 vec <- 1:10
 print(vec) # creates a vector from 1 to 10; a vector is a list of values stored in a single object
@@ -473,7 +503,7 @@ cat(x, y, z, fill = 1) # the fill option specifies line width
 
 x <- "The R package is great"
 sprintf("You know what? %s", x) # think of "%s" as a placeholder for a string stored in an object
-TASK: call the help documentation for the "sprintf()" function.
+# TASK: call the help documentation for the "sprintf()" function.
 
 y <- 0
 sprintf("You know what? I had %d beers last night", y)
@@ -493,7 +523,7 @@ nchar(c("How", "many", "characters", "are", "in", "this", "string?"))
 string2 <- 'If I want to include a "quote" inside a string, I use single quotes'
 string3 <- "\""
 string4 <- "\'" # if we want to include a single or double quote in our string we use the backslash (\) to escape the character
-TASK: include a backslash in a string.
+# TASK: include a backslash in a string.
 
 x <- c("\"", "\\")
 x
@@ -628,7 +658,7 @@ new_ses <- plyr::revalue(ses, c("low" = "small", "middle" = "medium", "high" = "
 print(new_ses)
 levels(new_ses)
 # Note that using the :: notation allows you to access the revalue() function without having to fully load in the plyr package.
-# There are other ways of recoding categorical variables, none of which (in our opinion) are as easy as Stata's approach.
+# There are other ways of recoding categorical variables, none of which (in my opinion) are as easy as Stata's approach.
 
 # Dropping categories with no observations
 
@@ -637,16 +667,11 @@ summary(ses_2)
 droplevels(ses_2)
 
 
-# 1.4 Saving Files #
+# 1.4 Saving R Files #
 
-# We can save the current workspace (i.e. all of the objects and/or functions we have created):
-save(file="./temp/dv_workspace.RData") # RData is the file extension for a workspace
-load("c:/temp/dv_workspace.RData") # load in a workspace
+# This is quite simple in R: simply press Ctrl + S or select File > Save from the menu.
 
-# However, we should have no need to save the workspace for a data wrangling/analysis piece of work;
-# we simply need our syntax file (R script) and raw data and we should be able to reproduce our project.
-
-# We can save our R script by pressing Ctrl + S (on Windows) or going to the File menu and selecting Save.
+# We only need to save R scripts, as the .RProj file does not need updating.
 
 
 # 1.5 Getting Help #
@@ -697,9 +722,12 @@ apropos("sum") # returns all objects in the global environment that contain the 
 # 1.8 Debugging #
 
 # This is the computer science term for dealing with code issues. R likes to tell you when something is not quite right,
-and not always in an intelligble manner. As progress with this workshop, you are likely to encounter the following results:
+# and not always in an intelligble manner. As progress with this workshop, you are likely to encounter the following results:
+
 #	- message: R is communicating a diagnostic message relating to your code; your commands still execute.
+
 #	- warning: R is highlighting an error/issue with your code, your commands still execute but the warnings need addressing.
+
 #	- error: R is telling you there has been a fatal error with your code; your commands do not execute.
 
 # Let's look at a simple example:
@@ -715,7 +743,6 @@ warning() # displays the warnings associated with the most recently executed blo
 #	- How does what you get differ from what you were expecting?
 #	- Were your expectations correct in the first place?
 #	- Can you reproduce the problem (exactly)?
-
 
 
 # 1.9 Environment Objects #
@@ -738,11 +765,12 @@ help(options)
 options() # wide range of options for displaying results etc
 options(digits=3) # change a specific option (i.e. number of digits to print on output)
 options(max.print = 9999) # set maxmimum number of rows to print to the console as 9999
+options(scipen = 999) # surpress display of scientific notation
 
 
 # 1.11 Data Visualisation Examples #
 
-# Congratulations on getting through the technical (boring) bit of the activity. To whet your appetite, here are
+# Congratulations on getting through the technical bit of the activity. To whet your appetite, here are
 # some examples of the techniques you will learn over the course of the workshop.
 
 # Import data #
