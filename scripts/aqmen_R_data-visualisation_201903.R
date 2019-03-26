@@ -1,0 +1,2589 @@
+# 
+# AQMEN (Data Science for Social Research)
+# http://www.aqmen.ac.uk/
+#
+# 
+# Data Visualisation
+# 
+# R Workshop (March 2019)
+# 
+# A three day hands-on workshop led by Dr Diarmuid McDonnell and Professor Vernon Gayle, University of Edinburgh.
+# 
+# 
+# Topics: 
+# 
+# Visualising data is emerging as a key component in effectively communicating research results and evidence. 
+# This three-day workshop will provide a comprehensive introduction for individuals wishing to learn 
+# how to design, produce and interpret data visualisations. 
+#
+#
+# Rationale: 
+# 
+# The Industrial Strategy recognises that a major challenge facing UK businesses and industry is how best to utilise big data 
+# to improve economic performance and increase productivity. A substantial barrier to exploiting the potential offered by 
+# emerging forms of big data is the lack of a suitably trained workforce with appropriate analytical skills. 
+#
+# Many statistical analysis techniques used in the social sciences are also suitable for working with big data in non-academic settings, 
+# however social science graduates often lack experience in applying their skills and knowledge in non-academic research domains.
+#
+#
+# Advice:
+#
+# The workshop is intended for people who have little prior experience of R.
+#
+# The aim of the workshop is to equip you with a proficiency in data visualisation using R as rapidly and painlessly as possible.
+#
+# Therefore, be good to yourself: we explore a multitude of useful data visualisation techniques that often take most of a semester to cover. 
+#
+# It will NOT be possible to learn everthing in three days (drinks on us if you prove us wrong).
+#
+# Please be patient. Computers often go wrong.
+#
+# Please asks the instructors for help.
+#
+# Feel free to work in pairs during the pratical sessions.
+#
+# Not all of your questions will be answered but we will help as much as we can.
+#
+# Good luck.
+#
+##############################################
+
+
+##############################################
+
+# Outline of Activities #
+
+# The workshop is based around a series of activities that involve the use of R for organising and enabling administrative data for statistical analysis:
+
+#	1. Getting Started with R: a quick introduction to the R programming language and various data types [ACT001]
+
+#	2. Wrangling Data for Graphing: how to organise and enable data for visualisation [ACT002]
+
+#	3. The Grammar of Graphics: how to create graphs in a logical and layered manner using ggplot2 [ACT003]
+
+#	4. Graphs in Action: how to construct a multitude of plot types in R [ACT004]
+
+#	5. Refining Graphical Presentations: how to add and tweak the design elements of your plot [ACT005]
+
+#	6. Communicating Analytical Results: how to plot the results of statistical models [ACT006]
+
+#	7. Further Adventures in Graphing: an overview of new plot types, themes and approaches [ACT007]
+
+#	8. Hackathon: two blocks of time where participants will tackle a data visualisation challenge using administrative data [ACT008]
+
+# If you want to jump to a section: press Ctrl + F and search for the activity code e.g. [ACT001].
+
+
+##############################################
+
+
+##############################################
+#
+#
+# We suggest that you make a copy of this file.
+#
+#
+# ##############################################
+# # IT IS IMPORTANT THAT YOU READ THIS HANDOUT #
+# # AND FOLLOW THE R FILE LINE BY LINE! #
+# ##############################################
+# 
+# The file is sequential. It MUST be run line by line. 
+# Many of the commands will NOT run if earlier lines of commands have not been executed.
+#
+# Anotate your new copy of the file as you work through it with your own notes 
+# (use "#" to comment out your notes).
+#
+#
+# Throughout the file there are markers requiring your input:
+#	- TASK: a coding task for you to complete
+#	- QUESTION: a question regarding your interpretation of some code or a plot
+#	- EXERCISE: a data visualisation challenge for you to complete at the end of an activity
+#
+# 
+# ON WITH THE SHOW!
+#
+#
+##############################################
+
+
+##############################################
+
+
+
+# 0. Software Demonstration #
+
+# 0.1 System Setup #
+
+# Create a R project folder/directory
+
+# Open RStudio and follow these instructions:
+# 	- File > New Project
+#	- Create project directory
+
+getwd() # tells us the current working directory i.e. workspace
+# setwd("C:/Users/mcdonndz-local/Desktop/temp") # set the working directory to a specified directory; however we have no need to
+# do this as we have already set up a directory to store all of the components of our R project.
+
+folders = c('data_raw', 'data_clean', 'figures', 'temp', 'logs') # create a list with folder names
+for(f in folders) {
+  print(f)
+  dir.create(f)
+} # take a look at the bottom right-hand panel in RStudio (or the directory on your machine) to check if the folders were created
+
+# Creating and saving files:
+data <- file.create("./temp/sampdata.csv")
+write.csv(data, "./temp/sampdata_20190321.csv")
+# Note the use of "." at the beginning of the file path; this signifies that the current working directory
+# should form the first part of the path without needing to be explicitly stated. This is an example of
+# using relative file paths and is considered good practice.
+
+# List all files in our working directory:
+dir() # list all files in a directory
+head(dir(recursive = TRUE)) # list all files in a directory (including its subdirectories); head() restricts the output to the first few results
+dir(pattern = "\\.csv$", recursive = TRUE) # find all files that end in ".csv"
+# The above command used regular expressions to detect patterns in text.
+
+file.info("./data_raw/sampdata.csv") # displays some basic file information 
+# (e.g. size, whether it is a folder, created and modified times)
+
+# That's enough file management for now. There are lots of other tasks we can perform, such as copying, moving, deleting,
+# opening, checking if a file exists etc, that we do not cover here: see [http://theautomatic.net/2018/07/11/manipulate-files-r/]
+
+# TASK: move the files from the workshop Dropbox folder to the "data_raw" directory you just created.
+
+# New R functions used in this section:
+
+#	- getwd() - provide working directory location
+#	- c() - create a vector of values or objects
+#	- print() - display information on the console
+#	- file.create() - create a file
+#	- write.csv() - export a csv file to a directory
+#	- dir.create() - create a directory
+#	- dir() - list all files in a directory
+#	- head() - list the first few rows (values) of a data frame (object)
+#	- file.info() - display information about a file
+
+
+# 0.2 Installing Packages #
+
+# The real power of using R for data wrangling, visualisation and analysis comes from the universe of user-written packages that are available.
+# A package bundles together code, data, documentation, and tests and provides an easy method to share with others.
+
+# Packages represent both a blessing and a curse: a blessing because it is unlikely you won't be able to find a function you need for your analysis;
+# a curse because it adds a bit of administrative burden to your workflow (i.e. find a package, install it, load it, use it). Also,
+# help documentation is wildly inconsistent across packages. 
+
+# A package only needs to be installed once, but you will need to load it in every time you launch an R session.
+
+my_packages <- c("tidyverse", "broom", "car", "expss", "coefplot", "cowplot",
+                 "gapminder", "GGally", "ggrepel", "ggridges", "gridExtra",
+                 "here", "interplot", "lubridate", "margins", "maps", "mapproj",
+                 "mapdata", "MASS", "quantreg", "rlang", "scales",
+                 "survey", "srvyr", "viridis", "viridisLite", "devtools") # create a list of desired packages
+
+install.packages(my_packages, repos = "http://cran.rstudio.com") # install packages from the CRAN repository
+
+devtools::install_github("kjhealy/socviz") # install socviz package from Github (an alternative to CRAN for storing packages)
+
+installed.packages() # check which packages have been installed
+
+.libPaths() # check which folder the packages are downloaded to
+
+
+# 0.3 Loading Packages #
+
+library(tidyverse) # load in the "tidyverse" package of data wrangling functions
+?tidyverse
+vignette("tidyverse")
+
+# TASK: load in the "car" and "expss" packages. The rest will be loaded in as we progress.
+
+# A final note about packages: you'll see mention of performing functions or tasks using base R. This means drawing on the functions that come
+# as standard with your version of R. install.packages() and write.csv() are examples of base R functions.
+
+# For the purposes of data wrangling (and most other data analysis tasks, frankly), we will not use base R functions; the reasons will become clear
+# as we progress but it is worth noting that there is more than one way to skin a cat.
+
+# New R functions used in this section:
+
+#	- install.packages() - install R packages
+#	- installed.packages() - display installed R packages
+#	- .libPaths() - display directory of installed R packages
+#	- library() - load in R package
+#	- vignette() - view examples of how to use the function/package (not available for all functions/packages)
+
+##############################################
+
+
+##############################################
+
+
+# 1. Getting Started with R [ACT001] #
+
+# R is a programming language. It has rules, packages, syntax, complexities, idiosyncracies...
+# It is not particularly easy to learn, nevermind master. It can seem as if you have to learn everything in order
+# to do anything!
+
+# Persevere: like any language, once you grasp the building blocks you will begin to feel comfortable. All of the fancy models, code and graphs
+# that make it into journal articles, textbooks, presentations etc are just extensions and flourishes added on top of the basic functions and rules.
+
+# The important thing is to expect failure and react accordingly (just like an astronaut).
+
+
+# 1.1 Comments #
+
+# This is a comment
+## This is also a comment
+###### ...you get the idea
+
+# Comments are an important means of documenting your workflow and ensuring others (including future-you) can reproduce your work.
+
+# In R studio, you can create multiline comments by highlighting the text and pressing Ctr + Shift + C. For example:
+
+This should be a comment and not code.
+Excuse me, did you hear me?
+HELLLOOOO!
+How rude...
+
+
+# 1.2 Writing Code #
+
+print("Hello World!") # display a message to the console
+
+# To execute (i.e. run) the above code, highlight it and press Ctrl + Enter, or the Run icon in the top-left panel in RStudio.
+
+# TASK: print your own personalised message to the console.
+
+
+# 1.3 Data Types #
+
+# Variables are known as 'objects' in R and can store a wide variety of data types:
+# - numeric
+# - string
+# - boolean etc
+
+# Each data type can have different classes i.e. numeric has integer and double (e.g. decimal).
+
+# We assign a value to an object using the "<-" operator. We can also use "=" but this is best avoided as the equals sign has another use
+# and "<-" is considered standard practice in R.
+
+# 1.3.1 Numeric #
+
+x <- 5 # Integer
+y <- 5.5 # Double or Float
+
+# Notice how RStudio doesn't print the value of x or y. To evaluate the assigment you need to call the object:
+x
+y
+
+# Assign and evaluate in a single command:
+(x <- 5)
+# Our advice is to keep assignment and evaluation commands separate (those parentheses can add confusion and lead to errors) but the choice is yours...
+
+print(x + y) # print ensures the result is displayed in the console or output window
+
+# We can compare objects using a set of comparison operators:
+x == y
+x < y
+x > y
+x != y
+x >= y
+x <= y
+# TASK: document what each of the comparison operators does.
+
+a <- c(1, 4, 9, 12)
+b <- c(4, 4, 9, 13)
+a == b # compares each number in the vector to its corresponding number in the other vector
+
+# Note that logical values TRUE and FALSE equate to 1 and 0 respectively, allowing us to perform arithmetic operations using these results:
+sum(a == b) # 2 instances where the elements of the vector are equal
+
+# To test if two objects are exactly equal:
+identical(x, y)
+
+print(typeof(x))
+print(typeof(y)) # R stores numbers as a double by default; we need to be specific when assigning the object's value(s):
+
+rm("x") # remove the objects from R
+rm("y") # check the environment pane in the top-right hand corner of RStudio to see what objects remain in the global environment
+
+x <- 5L # rather counterintuitively given that it's a letter, the "L" suffix ensures a number is stored as an integer
+y <- 5.5
+print(typeof(x)) # Now it is stored explicitly as an integer; in practice you often do not need to worry about this
+print(typeof(y)) 
+
+# Another approach is to convert an existing object:
+int_var <- 20
+int_var <- as.integer(int_var)
+print(typeof(int_var))
+
+# Vectors
+
+# Vectors provide a means of structuring data types as a list
+
+vec <- 1:10
+print(vec) # creates a vector from 1 to 10; a vector is a list of values stored in a single object
+vec[1] # return the first element in vec
+vec[1:5] # return the first five elements in vec
+vec[-2] # return the values of the vector, excluding the second element
+vec[-1:-5]
+# TASK: describe the results of "vec[-1:-5]".
+
+# The above commands are known as 'slicing' i.e. accessing a particular element(s) in a vector.
+
+# You can also store objects as a vector:
+ovec <- c(x, y) # combine the objects "x" and "y" in a vector called "ovec"
+ovec
+
+# You can count the number of elements in a vector:
+length(vec)
+
+# You can also drop elements:
+vec <- vec[-2] # note that we overwrite the existing object; we could just as easily assign a new object to preserve the original
+vec2 <- vec[-(4:6)] # drop 4-6 from the vector
+
+# We can perform calculations with vectors:
+a <- c(1, 2, 3, 4, 5)
+b <- c(6, 7, 8, 9, 10)
+c <- c(1, 2, 3)
+
+a + b # adds each element of the vectors together in order (i.e. 1 + 6, 2 + 7 etc)
+# This is known as vectorization and is a very useful property of R.
+
+a + c # generates a warning that the vectors are not multiples of each other (i.e. one has 5 elements, the other 4)
+# When vectors are of unequal length, the shorter vector is "recycled" i.e. goes back to the start.
+
+# Generate a sequence of numbers
+
+sequence <- seq(from = 1, to = 100, by = 5)
+print(sequence) 
+# TASK: describe what the seq() function is doing above.
+# TASK: create a sequence of numbers that starts at 55, ends at 7000, and increases by 55 each time.
+
+# Create a sequence based on repeating or replicating the numbers
+repetition <- rep(1:10, each = 10)
+print(repetition)
+
+# Generating sequences of random numbers
+
+# This is a useful function for performing simulations or generating data for testing ideas and techniques
+
+# Generate 100 random numbers between 0 and 25 from a uniform distribution i.e. each number has an equal probability of being selected
+runif(100, min = 0, max = 25)
+
+# Generate 100 random numbers between 0 and 25 (with replacement)
+sample(0:25, 100, replace = TRUE)
+
+# Generate 100 random numbers between 0 and 25 (without replacement)
+sample(0:25, 100, replace = FALSE)
+
+# QUESTION: why can we not sample 100 numbers from this range without replacement?
+
+# Generate 1000 random numbers from a normal distribution with given mean and standard deviation
+normdist <- rnorm(1000, mean = 0, sd = 1)
+hist(normdist) # approximately normal 
+print(summary(normdist))
+
+# Generate CDF probabilities for value(s) in vector q
+pnorm(0.5, mean = 0, sd = 1)
+
+# Generate quantile for probabilities in vector p
+qnorm(0.5, mean = 0, sd = 1)
+
+# Generate density function probabilites for value(s) in vector x
+dnorm(0.5, mean = 0, sd = 1)
+
+# Generate a vector of length n displaying the number of successes from a trial of size = 100 with a probabilty of success = 0.5
+rbinom(10, size = 100, prob = 0.5)
+# QUESTION: how many successes were there in 10 trials, each with a sample size of 100?
+
+# Generate a vector of length n displaying the random number of events occuring when lambda (mean count) equals 4.
+rpois(20, lambda = 4)
+# TASK: vary the number of expected events and interpret the results.
+
+# We can reproduce random numbers by setting the seed:
+set.seed(1) # name the random sample "1"
+rsamp1 <- rnorm(n = 10, mean = 0, sd = 1)
+set.seed(1)
+rsamp2 <- rnorm(n = 10, mean = 0, sd = 1)
+print(rsamp1)
+print(rsamp2) # produces the same values in each random sample
+
+# Rounding numbers
+
+x <- c(1, 1.35, 1.7, 2.05, 2.4, 2.75, 3.1, 3.45, 3.8, 4.15, 4.5, 4.85, 5.2, 5.55, 5.9)
+print(x)
+
+# Round to the nearest integer
+round(x) # note how the original object is not altered - run the command "print(x)" to check
+
+# Round up
+ceiling(x)
+
+# Round down
+floor(x)
+
+# Round to a specified decimal
+round(x, digits = 1)
+
+
+# 1.3.2 Strings #
+
+# Strings (text) are stored in the character class in R.
+
+a <- "learning to create" # create string a
+b <- "character strings" # create string b
+paste(a, b) # combine the strings
+
+# Paste character and number strings (converts numbers to character class)
+paste("The life of", pi)
+
+# Paste multiple strings
+paste("I", "love", "R")
+
+# Paste multiple strings with a separating character
+paste("I", "love", "R", sep = "-")
+
+# Converting to strings
+
+a <- "The life of"
+b <- pi
+is.character(b) # check if b is a string
+c <- as.character(b)
+is.character(c)
+
+# Printing strings
+
+print(a)
+print(a, quote = FALSE) # easier to use the command "noquote(a)"
+noquote(a)
+
+cat(a)
+cat(a, "Riley") # the cat function is useful for printing multiple objects in a readable format
+cat(letters)
+
+x <- "Today I am learning how to print strings."
+y <- "Tomorrow I plan to learn about something else."
+z <- "The day after that I will take a break and drink a beer."
+cat(x, y, z, fill = 1) # the fill option specifies line width
+
+# Substituting strings and numbers
+
+x <- "The R package is great"
+sprintf("You know what? %s", x) # think of "%s" as a placeholder for a string stored in an object
+TASK: call the help documentation for the "sprintf()" function.
+
+y <- 0
+sprintf("You know what? I had %d beers last night", y)
+sprintf("Here are some digits from Pi: %f", pi) # "%f" is a placeholder for a number stored in an object
+
+# Counting string elements and characters
+
+length("How many elements are in this string?")
+length(c("How", "many", "elements", "are", "in", "this", "string?"))
+
+nchar("How many characters are in this string?")
+nchar(c("How", "many", "characters", "are", "in", "this", "string?"))
+# Counting elements and characters becomes very useful when constructing loops.
+
+# Special characters
+
+string2 <- 'If I want to include a "quote" inside a string, I use single quotes'
+string3 <- "\""
+string4 <- "\'" # if we want to include a single or double quote in our string we use the backslash (\) to escape the character
+TASK: include a backslash in a string.
+
+x <- c("\"", "\\")
+x
+writeLines(x) # beware that the printed representation of a string is different from the contents of the string itself
+# Special characters are very useful in R but they can throw a spanner in the works; we'll deal more with them later in the workshop.
+
+# String manipulation with stringr
+
+# We can perform a lot of the core string manipulation tasks (e.g. removing whitespace, converting to lowercase etc)
+# using base R functions. However we will use a package that simplifies the syntax: stringr
+
+help("stringr")
+
+# All functions in stringr start with str_ and take a vector of strings as the first argument:
+
+x <- "Hello, this is a run-of-the-mill string."
+str_length(x)
+str_c(x, " ", "Not very interesting at all.") # combine strings
+str_sub(x, 1, 10) 
+# QUESTION: what is the str_sub function doing to the string?
+
+y <- c("Hello", "This", "is a bog standard", "string")
+str_subset(y, "[aeiou]") # returns strings matching the pattern i.e. contain a vowel
+str_subset(y, "[qrstuvwxyz]")
+
+# Change text to upper, lower or title case
+uc <- "DOWN WITH THAT SORT OF THING"
+lc <- "careful now"
+str_to_upper(lc)
+str_to_lower(uc)
+str_to_title(uc) 
+# QUESTION: what tv show are those strings referencing an iconic moment from?
+
+# String matching
+
+str_detect(y, "[aeiou]") # tells you if there?s any match to the pattern
+str_count(y, "[aeiou]") # counts how many vowels are in each string
+str_locate(y, "[aeiou]") # gives the position of the first match
+str_extract(y, "[aeiou]") # extracts the text of the first match
+str_match(y, "(.)[aeiou](.)") # extract the characters on either side of the vowel
+str_replace(y, "[aeiou]", "?") # replace first match with a specified character
+str_split(x, "") # split a string into individual characters based on a specified separator
+str_dup(x, times = 10) # duplicates the string n times
+
+# Removing leading and trailing whitespace
+
+text <- c("Text ", " with", " whitespace ", " on", "both ", " sides ")
+print(text)
+
+# Remove whitespaces on both sides
+str_trim(text, side = "both") # other options include "right" and "left"
+str_pad("beer", width = 10, side = "left") # add whitespace on the left of the string
+
+# Set operations for strings
+
+set_1 <- c("lagunitas", "bells", "dogfish", "summit", "odell")
+set_2 <- c("sierra", "bells", "harpoon", "lagunitas", "founders")
+union(set_1, set_2) # list all individual elements from the sets
+intersect(set_1, set_2) # list all common elements from the sets
+setdiff(set_1, set_2) # returns elements in set_1 not in set_2; swap order of sets
+
+# To test if two vectors contain the same elements regardless of order use setequal():
+
+set_3 <- c("woody", "buzz", "rex")
+set_4 <- c("woody", "andy", "buzz")
+set_5 <- c("andy", "buzz", "woody")
+setequal(set_3, set_4)
+
+set_6 <- c("woody", "andy", "buzz")
+identical(set_4, set_6) # check if sets are exactly equal (elements and order)
+
+# Identifying if element is in string
+good <- "andy"
+bad <- "sid"
+is.element(good, set_5) # is the word "andy" in set_5?
+good %in% set_5 # same as above
+# TASK: see if the word "sid" is in set_3.
+
+# Sort a string
+sort(set_5)
+sort(set_5, decreasing = TRUE)
+
+# That's enough of strings. The information they contain can be of considerable interest for quantitative data analyses and it is worth
+# beginning familiar with their storage and manipulation in advance of more sophisticated analyses (e.g. Natural Language Processing).
+
+
+# 1.3.3 Categorical Variables #
+
+# Known as factor variables in R (and other packages like Stata etc), 
+# they group observations into exhaustive and mutually exclusive categories.
+# We'll use the forcats package to work with categorical variables in R:
+library(forcats) # not part of the core tidyverse package so we need to load it in separately
+
+# Create a factor
+
+x <- c("male", "female", "female", "male", "female") # list of observations for biological sex
+sex <- factor(x)
+sex
+# QUESTION: how many observations and levels are there for this factor variable?
+
+class(sex) # confirm it is a factor variable
+unclass(sex) # show the underlying values of this variable: female = 1, male = 2 (numeric values are attached to categories alphabetically by default);
+
+# We can change the order in which numbers are attached to categories by specifying the "levels" option:
+sex2 <- factor(x, levels = c("male", "female"))
+levels(sex2)  # display the levels (i.e. categories) of this variable
+summary(sex2) # summarise the variable i.e. frequency count
+
+# We can convert an existing list of strings to a factor variable:
+group <- c("Group1", "Group2", "Group2", "Group1", "Group1")
+group2 <- factor(group)
+levels(group2)
+
+# Instead of numbering categories alphabetically, we can do so according to when a factor first appears:
+las <- c("Glasgow", "Edinburgh", "Aberdeen", "Glasgow", "Orkney", "Edinburgh")
+cat_las <- factor(las, unique(las))
+attributes(cat_las)
+unclass(cat_las)
+
+# Ordering factor variables
+ses <- c("low", "middle", "low", "low", "low", "low", "middle", "low", "middle",
+         "middle", "middle", "middle", "middle", "high", "high", "low", "middle",
+         "middle", "low", "high")
+ses <- factor(ses, levels = c("low", "middle", "high"), ordered = TRUE)
+print(ses) # categories are ordered from "low" to "high"
+factor(ses, levels = rev(levels(ses))) # you can also reverse the order of levels if desired
+
+# Recoding categorical variables
+
+# The "plyr" package is useful for this task:
+new_ses <- plyr::revalue(ses, c("low" = "small", "middle" = "medium", "high" = "large"))
+print(new_ses)
+levels(new_ses)
+# Note that using the :: notation allows you to access the revalue() function without having to fully load in the plyr package.
+# There are other ways of recoding categorical variables, none of which (in our opinion) are as easy as Stata's approach.
+
+# Dropping categories with no observations
+
+ses_2 <- ses[ses != "middle"] # create a new variable where ses does not equal the value "middle"
+summary(ses_2)
+droplevels(ses_2)
+
+
+# 1.4 Saving Files #
+
+# We can save the current workspace (i.e. all of the objects and/or functions we have created):
+save(file="./temp/dv_workspace.RData") # RData is the file extension for a workspace
+load("c:/temp/dv_workspace.RData") # load in a workspace
+
+# However, we should have no need to save the workspace for a data wrangling/analysis piece of work;
+# we simply need our syntax file (R script) and raw data and we should be able to reproduce our project.
+
+# We can save our R script by pressing Ctrl + S (on Windows) or going to the File menu and selecting Save.
+
+
+# 1.5 Getting Help #
+
+help.start() # provides general help links
+help.search("regression") # searches the help system for documentation matching a given character string
+
+help("strtrim") # finds help documentation on the "strtrim" function
+?strtrim # another way of searching for help
+example("strtrim") # display example code using this function
+# In RStudio, you can also highlight the function in your code and press F1.
+
+help(mean) # let's dissect the help material for the mean() function
+vignette("dplyr") # some of the better-documented packages provide detailed examples of how to use its functions
+
+# Can't quite remember the name of an object or function?
+apropos("sum") # returns all objects in the global environment that contain the text "sum"
+
+# If you need help from the web then [insert chosen search engine] is your friend.
+# Likewise, the Stackoverflow website is an excellent source of help on many programming languages and data wrangling/analysis problems.
+# If you experience an error message then follow the above advice by searching for the exact message you receive i.e. don't paraphrase
+# your issue.
+
+
+# 1.6 Keyboard Shortcuts #
+
+# To execute R code: highlight the syntax and press Ctrl + Enter.
+
+# To execute the entire R script (i.e. all of the code in one): press Ctrl + Shift + S.
+
+# To insert the assignment operator (i.e '<-'): press Alt + minus key (-).
+
+# To autocomplete your syntax: start typing the name of an object/function and press TAB.
+
+# To insert the pipe operator (%>%): press Ctrl + Shift + M.
+
+
+# 1.7 Troubleshooting #
+
+# If you run some code and nothing happens, check the console (bottom-left pane in RStudio): if you see a plus sign (+) then
+# R thinks you haven't finished writing the command and expects more code. If this happens then press the ESC key to cancel the
+# command.
+
+# R is case sensitive e.g. 'View(data)' displays the data set in a window (similar to the 'browse' function in Stata);
+# 'view(data)' does nothing.
+
+
+# 1.8 Debugging #
+
+# This is the computer science term for dealing with code issues. R likes to tell you when something is not quite right,
+and not always in an intelligble manner. As progress with this workshop, you are likely to encounter the following results:
+#	- message: R is communicating a diagnostic message relating to your code; your commands still execute.
+#	- warning: R is highlighting an error/issue with your code, your commands still execute but the warnings need addressing.
+#	- error: R is telling you there has been a fatal error with your code; your commands do not execute.
+
+# Let's look at a simple example:
+log(-1) # take the natural log of -1
+# This warning tells you that the output is missing i.e. there is no natural log of a negative number.
+warning() # displays the warnings associated with the most recently executed block of code
+
+# You'll encounter plenty of messages, warnings and errors over the course of this workshop. For now, here is some general
+# advice from Peng (2015) regarding what questions to ask when debugging:
+#	- What was your input? How did you call the function?
+#	- What were you expecting? Output, messages, other results?
+#	- What did you get?
+#	- How does what you get differ from what you were expecting?
+#	- Were your expectations correct in the first place?
+#	- Can you reproduce the problem (exactly)?
+
+
+
+# 1.9 Environment Objects #
+
+# We can remove some of the objects we've created (i.e. delete variables):
+ls() # list existing objects
+
+a <- "I am a useless object"
+rm("a") # delete the object "a"
+
+exists("x") # check if the object "x" exists
+rm(c("x", "y")) # you can remove multiple objects by using the "c()" function
+
+history(Inf) # displays all of the commands executed in this R session
+
+
+# 1.10 Workspace Options #
+
+help(options)
+options() # wide range of options for displaying results etc
+options(digits=3) # change a specific option (i.e. number of digits to print on output)
+options(max.print = 9999) # set maxmimum number of rows to print to the console as 9999
+
+
+# 1.11 Data Visualisation Examples #
+
+# Congratulations on getting through the technical (boring) bit of the activity. To whet your appetite, here are
+# some examples of the techniques you will learn over the course of the workshop.
+
+# Import data #
+
+library(readr)
+
+auto <- read_csv("./data_raw/auto.csv") # the (in)famous auto data set from Stata
+str(auto)
+auto
+
+# Some simple graphs #
+
+# A simple box plot
+
+str(auto$price)
+sum(is.na(auto$price)) # no missing values
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_boxplot(mapping = aes(x = "", y = auto$price)) # single boxplot (no x axis)
+ggplot(data = auto) + geom_boxplot(mapping = aes(x = auto$foreign, y = auto$price)) # two boxplots
+
+
+# A simple bar chart
+
+class(auto$foreign) # stored as character data type - we want this to be a factor (categorical) variable
+auto$foreign <- as.factor(auto$foreign) # coerce the foreign variable to be factor data type
+levels(auto$foreign)
+factor(auto$foreign) # that's more like it
+unclass(auto$foreign) # Domestic = 1; Foreign = 2
+
+x11() # opens a bigger window in which to display graphs
+ggplot(data = auto) + geom_bar(mapping = aes(auto$foreign)) 
+
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$foreign)) # add colour to the bars based on categories of foreign
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78)) # add colour to the bars based on categories of rep78; the result is a stacked bar chart
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "fill") # stacked bars of same height
+ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "dodge") # place bars side-by-side
+
+
+# A simple histogram
+
+x11()
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg)) # narrows bins result in gaps
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4)
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4, fill = "red") # add colour to the graph
+
+# Histogram diassgregated by a second variable:
+ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4)
+# Note how we moved the fill option inside the aes() function.
+
+# Density plot
+ggplot(data = auto) + geom_density(mapping = aes(auto$mpg, fill = auto$foreign))
+
+
+# A simple dot chart
+
+x11()
+ggplot(data = auto) + geom_dotplot(mapping = aes(x = auto$price))
+
+
+# A simple count plot
+
+ggplot(data = diamonds) +
+  geom_count(mapping = aes(x = cut, y = color)) # a count plot is a good way of visualing the relationship between two categorical variables
+# QUESTION: what are the most common combinations of diamond colour and quality?
+
+
+
+# A simple pie chart
+
+# Pie charts are tricky to produce in R and with ggplot2, and thus are not recommended
+# when a bar chart would suffice.
+
+# You'll need to get your Pie fix elsewhere.
+
+
+# A simple scatterplot
+
+x11() # opens a bigger window in which to display subsequent graphs
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg))
+# QUESTION: what is the association between miles per gallon and the price of a car?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, color = foreign))
+# QUESTION: what is the effect of specifying the color option in the aes() function?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, size = foreign))
+# QUESTION: is a categorical variable a good choice for mapping to the size aesthetic?
+
+ggplot(data = auto) + geom_point(mapping = aes(x = price, y = mpg, alpha = foreign))
+
+ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = foreign))
+ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = foreign, color = foreign))
+# Note how we can combine different shapes and colours in a single plot.
+
+# We've introduced a number of different aesthetic options in the above graphs:
+#	- color
+#	- shape
+# 	- size
+#	- transparency (alpha = )
+
+# Keep these in mind as we progress, we'll also introduce other options that alter the display of the plots.
+
+
+# New R functions used in this section:
+
+#	- length() - return the length of an object
+#	- rm() - remove an object from the workspace environment
+#	- read_csv() - import csv files into R
+#	- export_csv() - export data as csv files from R
+#	- read_excel() - import xls/xlsx files into R
+#	- write_xlsx() -  export data as xls/xlsx files from R
+#	- options() - change default R settings
+#	- ls() - list objects in workspace environment
+#	- str() - examine the structure of an object
+#	- factor() - create a categorical variable
+#	- class() - return an object's class
+#	- as_tibble() - create a tibble data frame
+#	- data.frame() - create a data frame
+
+
+##############################################
+
+
+##############################################
+
+
+
+# 2. Wrangling Data for Graphing [ACT002] #
+
+# Wickham's dictum: Tidy datasets are all alike, but every messy dataset is messy in its own way.
+
+# In this section we focus on the many tasks associated with wrangling or marshalling your data into a format suitable for visualisation.
+# In R-speak, this means constructing a "tidy" data set. This format will be familiar to you. A tidy data set is one that:
+#	- is rectangular or tabular:
+#		o every value has its own cell
+#		o every variable has its own column
+#		o every observation has its own row
+
+# Social scientists are fluent in this format but as the known universe of data expands, corraling untidy data into a tidy format
+# will be a necessary skill. Examples of untidy data sources include text corpora, information scraped from websites etc. However,
+# even "recognisable" data sources can still be untidy e.g. administrative data, social surveys.
+
+# Finally, even if your data set is tabular, the variable names and values still need processing, new measures need to be constructed,
+# additional data sets need to merged or appended etc.
+
+# In this section we focus on importing data, and examining and manipulating variables.
+# We are going to work with large-scale, messy and longitudinal administrative data on U.K. charities.
+# A data dictionary can be found on the Charity Commission's website [http://data.charitycommission.gov.uk/data-definition.aspx]
+
+
+# 2.1 Importing Data Sets
+
+# This is the latest copy of the Charity Register i.e. list of all registered charities in England and Wales:
+char_reg <- read_csv("./data_raw/extract_main_charity.csv")
+# Ignore the warnings for now; we'll address those later.
+
+View(char_reg) # browse the data set
+head(char_reg) # view the first few rows of the data set
+tail(char_reg) # view the last few rows of the data set
+names(char_reg) # list of variable names
+str(char_reg) # examine the structure of the data set
+attributes(char_reg) # list the attributes (i.e. metadata) of the data set
+ncol(char_reg) # number of columns
+nrow(char_reg) # number of rows
+order(char_reg$regno) # sort the data set by ascending order of charity number
+
+# We can also add a label or comment to the dataset:
+comment(char_reg) <- "This dataset contains observations for registered charities in England & Wales (February 2019)"
+attributes(char_reg)
+
+# TASK: try adding a second comment to the dataset; what happens?
+
+# TASK: import the "extract_remove_ref.csv" file and describe the structure and contents of the data set, and label the data set.
+
+
+# 2.2 Examining Variables
+
+str(char_reg) # list the variables and their data type
+class(char_reg$income) # list the class of the income variable - it is numeric
+# Note the use of $col_name suffix to access variables in the data set i.e. data$variable.
+
+(var_lab(char_reg$income) <- "Latest annual gross income of a charity") # add a variable label using var_lab() function from "expss" package
+unlab(char_reg$income) # drop the variable label
+
+# TASK: add labels for all of the variables; refer to the data dictionary to understand the meaning of each column.
+
+head(char_reg$fyend) # day and month of a charity's financial year end
+class(char_reg$fyend) # stored as character data type - we want this to be a factor (categorical) variable
+(char_reg$fyend_cat <- as.factor(char_reg$fyend)) # create a new variable
+
+# QUESTION: what is the effect of enclosing the command in parentheses?
+
+levels(char_reg$fyend_cat) # hmmm, probably too many categories to be useful; let's drop this new variable:
+char_reg <- within(char_reg, rm(fyend_cat)) # remove the variable from the data set using the rm() function
+names(char_reg) # check if the variable was deleted
+
+# TASK: call the help documentation for the within() function and write a note describing its use.
+
+median(char_reg$income, na.rm = TRUE) # calculate median income, ignoring missing values
+summary(char_reg$income) # summary statistics for annual gross income; however, too difficult to read (in scientific notation)
+options(scipen=999) # change formatting display of numbers (no scientific notation)
+
+# TASK: run the summary() function once more. What is the mean income in the charity sector?
+
+char_reg$linc <- log(char_reg$income) # create a new variable that is a log transformation of annual gross income;
+# This is often a good idea as charity income is usually heavily positively skewed.
+hist(char_reg$linc) # plot a histogram of log income
+
+# TASK: generate a variable for income squared and plot a histogram of it.
+
+char_reg$highinc <- as.numeric(char_reg$income > 500000) # create a dummy variable that is set to 1 if income > ?500k
+table(char_reg$highinc)
+class(char_reg$highinc) # stored as an integer
+
+char_reg$inc_cat <- cut(char_reg$income, breaks = c(0,25000,500000, Inf), labels = c("Small", "Medium", "Large")) # create a categorical variable from income
+
+# TASK: describe what the cut() function does and returns. What does "Inf" represent?
+
+summary(char_reg$inc_cat)
+class(char_reg$inc_cat) # stored as a factor
+levels(char_reg$inc_cat)
+
+char_reg$inc_cat[char_reg$inc_cat=="Small"] <- "Tiny" # recode one of the values of inc_cat to a different value (i.e. Small to Tiny)
+# EXAMPLE USING RECODE!
+
+
+# 2.4 Subsettting Data
+
+char_reg_sub <- subset(char_reg, select = c(regno, income, fyend)) # keep certain variables
+str(char_reg_sub)
+
+char_reg_fil <- subset(char_reg, income >= 500000) # keep certain observations
+summary(char_reg_fil$income)
+
+View(char_reg[char_reg$income >=100000000 & !is.na(char_reg$income), ])
+# Note the use of "[]" as another means of subsetting the data set. The above command displays the observations where
+# income is greater than ?100m and income is not missing.
+
+# TASK: drop the "char_reg_sub" and "char_reg_fil" objects from the workspace.
+
+# Dealing with duplicates
+
+distinct(char_reg) # drops duplicate rows from the data set
+
+char_reg %>%
+  distinct(regno) # drop rows where there are duplicates of charity number; what is this new symbol %>%?
+
+# Piping
+
+# No, not the Scottish kind... Think of piping as a process for combining multiple functions in one command. It takes
+# data as an input, transfers it into some functions, and converts it into some results (like a pipeline). 
+# In the words of Healy (2019):
+# "A pipeline is typically a series of operations that do one or more of four things:
+#   1. Group the data into the nested structure we want for our summary, such as ?Religion by Region? or ?Authors by Publications by Year?.
+#   2. Filter or select pieces of the data by row, column, or both. This gets us the piece of the table we want to work on.
+#   3. Mutate the data by creating new variables at the current level of grouping. This adds new columns to the table without aggregating it.
+#   4. Summarize or aggregate the grouped data. This creates new variables at a higher level of grouping. For example we might calculate means with mean() or counts with n(). This results in a smaller, summary table, which we might do more things on if we want."
+
+# However, this is simply a taster of the tasks that can be performed while piping.
+
+# The pipe operator = %>% (Ctrl + Shift + M)
+
+# Piping is slightly abstract at first glance, so let's dig into some more examples:
+
+char_reg %>%
+  distinct(income) # we can see that the results of this command greatly reduces the size of the data set (79,919 rows)
+
+char_reg2 <- char_reg %>%
+  distinct(income) # store the results of the distinct command in a new object (char_reg2)
+
+# TASK: explore distinct observations for some of the other variables in the data set.
+
+
+# 2.5 Dealing with Missing Data
+
+# Think of missing values as being of two types:
+#	1. Explicitly missing
+#	2. Implicitly missing
+# The former is the presence of an absence (i.e. missing values are flagged as NA or 99), the latter the absence of a presence (i.e.
+# we do not possess an observation for that person for whatever reason).
+
+# In R, missing values are often represented by NA or some other user-specified value (e.g. 99).
+# Missing values are problematic as any the result of any operation involving them will also be missing (unknown). For example:
+x <- NA
+y <- NA
+x + 10
+y - 500
+NA == NA
+
+is.na(char_reg$income) # identify which values of the variable are missing
+which(is.na(char_reg$income)) # identify where in the variable the missing values are (i.e. the row number)
+sum(is.na(char_reg$income)) # count the number of missing values
+# Note how we wrapped the is.na() function inside the sum() function. This is a powerful feature of R and should be
+# kept in mind as you progress.
+
+# TASK: count the number of missing values for charity number, income date and email.
+
+# We can also use the complete.cases() function to identify and exclude rows with missing values:
+complete.cases(char_reg) # rows three and four have missing values for some/all of their variables
+char_reg[!complete.cases(char_reg), ] # list missing rows
+# Note the use of "!" in the above command: this is a logical negation e.g. NOT EQUALS. In the case above, the "!"
+# is returning the opposite of complete.cases().
+
+char_reg_nomiss <- na.omit(char_reg) # list non-missing rows
+nrow(char_reg_nomiss)
+
+# QUESTION: how many observations in the data set have no missing values for all of the variables?
+# TASK: create a new data set that only contains observations for which we have non-missing values for income.
+
+# We can exclude missing values from calculations and functions as follows:
+mean(char_reg$income)
+
+# QUESTION: why is the mean() function not returning a numeric value?
+
+mean(char_reg$income, na.rm = TRUE)
+
+# We can recode missing values quite easily:
+char_reg$income[is.na(char_reg$income)] <- -9 # recode missing to -9
+View(char_reg$income[char_reg$income==-9])
+
+char_reg$income[char_reg$income==-9] <- -NA # recode -9 as missing
+
+# TASK: recode 0 as missing for income.
+
+
+# 2.6 Saving Data
+
+# We have conducted some basic but effective data wrangling work on our raw data - time to save the results:
+
+write_rds(char_reg, "./data_clean/ew-charity-register-201902.rds") # save as an R file
+write_csv(char_reg, "./data_clean/ew-charity-register-201902.csv")
+
+read_rds("./data_clean/ew-charity-register-201902.rds") # load in the clean data file
+
+
+# New R functions used in this section:
+
+# NOT COMPLETED!!
+
+
+# EXERCISE: 
+# 1. Load in the data file "extract_charity.csv".
+# 2. How many variables does it contain? How many observations?
+# 3. Create a subset of this data set containing only registered charities.
+# 4. Drop duplicate observations in the data set.
+# 5. Produce a histogram of the number of subsidiaries a charity has.
+# HINT: don't forget to use the data dictionary if you are unsure what the data set or variables represent.
+
+
+# Congratulations on reaching the end of Activity Two. If you feel comfortable then feel free to continue
+# a little further with the material. 
+
+# It's nearly time to graph!
+
+
+### END OF ACTIVITY TWO [ACT002] ###
+
+
+##############################################
+
+
+##############################################
+
+
+
+# 3. The Grammar of Graphics [ACT003] #
+
+# Data Visualisation is a key skill in social science data analysis, playing a vital role in theory development, 
+# measurement, data exploration, and interpretation and communication of results. 
+
+# It is an equally powerful and convincing approach to data analysis in industry.
+
+# The aim of a visualisation is to present a great deal of often complicated/complex information in as clear, concise and
+# intelligible way as possible; by and large, the consumer of a graph should not need to know the underlying logic and details
+# of the analysis in order to understand the message conveyed by the visualisation.
+
+# Graphs are a particularly powerful means of highlighting similarities and differences between groups.
+
+
+# 3.1 ggplot2
+
+library(ggplot2) # load in the package
+?ggplot2
+
+# ggplot2 works by combining "layers" to create a visualisation i.e. data + variables/axes + graph/plot type + labelling etc
+# It is an implementation of an approach known as the "grammar of graphics" (Wilkinson, 2005):
+
+# "The grammar is a set of rules for producing graphics from data, taking pieces of data 
+# and mapping them to geometric objects (like points and lines) that have aesthetic 
+# attributes (like position, color and size), together with further rules for transforming 
+# the data if needed (e.g. to a smoothed line), adjusting scales (e.g. to a log scale)
+# and projecting the results onto a different coordinate system (usually cartesian)."
+# (Healy, 2019)
+
+# Note that we could use R's default plotting options (e.g. boxplot(), hist() etc) but we feel it is
+# best to get into the habit of using the more flexible, varied and powerful options provided by ggplot2.
+
+# Further reasons to like ggplot2? The default display options are well-chosen and there are a multitude of options for refining plots;
+# these features incorporate general rules for good visualisation as well as cognitive preferences for information presentation 
+# i.e. the package accounts for how we perceive colour, shapes, text, length etc.
+
+
+# 3.2 The Basics of ggplot()
+
+# data > mapping > geom > co-ordinates and scales > labels
+# The above represents the basic syntax of a ggplot graph; let's look at an example to understand what is happening at each
+# step and the final result:
+
+library(gapminder) # load in gapminder data
+gapminder
+
+# TASK: view the content and structure of this data set. How many observations and variables does it contain? 
+
+# See the gapminder website to learn more about this data set and the much-missed Hans Rosling [https://www.gapminder.org/]
+# P.S. You can watch the great man in action here: [https://www.youtube.com/watch?v=hVimVzgtD6w]
+
+# Create the base object for producing our graph (i.e. the data and mapping components):
+
+summary(gapminder$gdpPercap)
+summary(gapminder$lifeExp) # summarise our two variables of interest
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp))
+
+# Let's unpack the above command:
+# 1. We pass some data to the ggplot() function.
+# 2. Then we map variables in the data to a set of plot co-ordinates (i.e. x and y axes).
+
+# Next we specify what type of plot we would like to draw and add it to the base object we created ("p"):
+
+p + geom_point() # geom_point() creates a scatterplot
+
+# QUESTION: how would you describe the association between GDP and life expectancy based on this graph?
+
+# Healy's (2019) summary of the graphing process in R:
+# 	1. Tell the ggplot() function what data we want to use.
+#	2. Tell ggplot() what relationships we want to see. For convenience we will put the results of the first two steps in an object called p (but this can be given an alternative name).
+# 	3. Tell ggplot how we want to see the relationships in our data (i.e. choose a geom).
+#	4. Layer on additional geoms as needed, by adding them to the p object one at a time.
+#	5. Use some additional functions to adjust scales, labels, tick marks, titles etc.
+
+# Let's add an additional geom to our graph:
+
+p + geom_point() + 
+  geom_smooth() # 'smooth' the trend line 
+
+# A quick (and important) aside: note how the '+' symbol appears at the end of the line. This is crucial as placing it on the next line will result in the
+# command not executing. This is because R understands the end of a line (i.e. a carriage return) as being the end of the command.
+
+p + geom_point() + 
+  geom_smooth() +
+  scale_x_log10() # adjust the x axis by converting to log (base 10) values
+
+# QUESTION: what have we done by converting the x axis to a log scale?
+
+p + geom_point() + 
+  geom_smooth() +
+  scale_x_log10(labels = scales::dollar) # adjust the x axis labels by including dollar values instead of scientific notation
+# Note the use of 'scales::dollar' in the above code - this calls on the dollar() function from the scales library, without having to load the entire library.
+
+# We can manually adjust the aesthetic of the graph by including it as an argument of the geom() function i.e. it goes outside of aes().
+# Here is some advice from Grolemund & Wickham (2017):
+#	- color = "name of color" i.e. is a string ("red", "blue")
+#	- size = number in mm
+#	- shape = number between 0 and 24
+
+p + geom_point(colour = "purple") + 
+  geom_smooth() +
+  scale_x_log10(labels = scales::dollar) # adjust the colour of the plotted points; note how it is included in the geom() funciton, NOT aes()
+
+# TASK: change the colour and size of the trend line in the above plot.
+
+# Finally, let's add some labels and descriptions of the plot's various components:
+
+p + geom_point(alpha = 0.3) + 
+  geom_smooth() +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x = "GDP Per Capita", y = "Life Expectancy in Years",
+       title = "Economic Growth and Life Expectancy",
+       subtitle = "Data points are country-years",
+       caption = "Source: Gapminder.")
+
+# QUESTION: what effect does the 'alpha = 0.3' option have on the plot?
+
+# TASK: disaggregate the above plot by a third variable: 'continent' (hint: you need to edit the p object).
+
+# ggplot() expects your data to be tidy:
+#	- every variable is a column
+#	- every observation is a row
+
+# A final note on ggplot(): we can perform the mapping of variables to aesthetic in the geom_() function. This is particularly
+# useful when disaggregating by additional variables i.e. the points can be coloured by a third variable, while the trend line remains 
+# unaffected.
+
+
+# 3.3 Saving Graphs
+
+# We often want to save plots individually for inclusion in papers, presentations, sharing with colleagues etc. ggplot() makes this easy:
+
+p_out <- p + geom_point(alpha = 0.3) + 
+  geom_smooth() +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x = "GDP Per Capita", y = "Life Expectancy in Years",
+       title = "Economic Growth and Life Expectancy",
+       subtitle = "Data points are country-years",
+       caption = "Source: Gapminder.") # store the full plot as a new object 'p_out'
+
+ggsave("./figures/mylovelygraph.png", plot = p_out, height = 8, width = 12) # the first argument is the file path and name, the second is the name of the plot to save,
+# the third and fourth control the size (in inches) of the image (though you can add a fifth argument ('units = ') to be specific.
+
+ggsave("./figures/mylovelygraph.pdf", plot = p_out, height = 8, width = 12) # save as pdf
+
+
+# EXERCISE: 
+# 1. Load in the data file "extract_financial.csv".
+# 2. Produce a scatterplot of income and expenditure.
+# 3. Adjust this plot so that both axes are log scaled (base 10).
+# 4. Add meaningful plot titles and labels.
+# 5. Summarise the association between these two variables. How much information can you glean from a simple graph like this?
+
+
+### END OF ACTIVITY THREE [ACT003] ###
+
+# If you've finished ahead of time then please use this opportunity to revisit
+# troublesome topics/commands and ask the tutors plenty of questions.
+
+
+##############################################
+
+
+##############################################
+
+
+# AND NOW FOR SOMETHING COMPLETELY DIFFERENT
+
+# Making a near-perfect Yorkshire Pudding - a la Vernon Gayle #
+
+# 3 eggs
+# 115g plain flour
+# 285ml milk
+# 12 tablespoons vegetable oil / I prefer beef dripping
+
+# 1. Whisk the eggs, flour, salt, and milk together really well in a bowl 
+to make your batter. 
+
+# 2. Pour the batter into a jug, and let it sit for 30 minutes before you use it. 
+
+# 3. Turn your oven up to the highest setting and place the baking tray in the 
+oven to heat up for 5 minutes. 
+
+# 4. Place 1 table spoon of oil in each indentation, 
+and put the tray back into the oven and heat until oil is very hot.
+ 
+# 5. Open oven door, slide the tray out, and carefully pour the batter in. 
+
+# 6. Close the door and cook for 15 minutes without opening the oven door. 
+
+# Serve immediately with roast beef (or similar) veg and gravy.
+
+
+### END OF DAY ONE ###
+
+
+##############################################
+
+
+##############################################
+
+
+### BEGINNING OF DAY TWO ###
+
+# REMINDER: this is a new R session and you need to reload (but not reinstall) the packages you need
+# for the upcoming activities. E.g. library(tidyverse)
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate) # package for working with dates
+
+
+# 4. Graphs in Action [ACT004] #
+
+# 4.1 Combining Data Management and Graphing #
+
+# We often need to get our data in a format suitable for plotting: we might need to 
+# collapse our data set to create aggregate values (e.g. yearly trends), or compute
+# summary statistics from the raw data, or disaggregate our data into different pieces.
+
+# In this section you will learn how to use ggplot() to perform some crucial data management work.
+# We will focus on 'grouping', 'faceting' and 'transforming'our data for plotting.
+
+
+# 4.1.1 Grouping
+
+# Let's try and produce a graph of life expectancy trajectory for each country over time:
+library(gapminder) # load in gapminder data
+gapminder
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = year,
+                          y = lifeExp))
+p + geom_line() 
+
+# QUESTION: what do you think has gone wrong here? HINT: take a look at the rows in the data.
+
+# If you're looking for comfort for your graphing troubles, check out @accidental__aRt on Twitter...
+
+# Let's see if we can correct the issue using the 'group' aesthetic:
+p <- ggplot(data = gapminder,
+            mapping = aes(x = year,
+                          y = lifeExp))
+p + geom_line(aes(group=country))
+
+# That looks more like it: one line per country. It's still pretty rough-looking but we'll learn how to spruce it up later.
+
+# QUESTION: how would you interpret the trend in life expectency over time?
+
+
+# 4.2.1 Faceting
+
+# This is a very useful function for creating separate plots in a single visualisation.
+# We do this by including a third variable in the ggplot() command.
+
+# For example, the plot of life expectency we produced above is cluttered and it would be useful to separate lines
+# by continent to see if there are regional differences in life expectency.
+x11()
+p <- ggplot(data = gapminder,
+            mapping = aes(x = year,
+                          y = lifeExp))
+
+p + geom_line(aes(group=country)) +
+  facet_wrap(~ continent)
+# We use the '~' symbol to tell the facet_wrap command that we are providing it with a
+# formula - in this case just a single variable but we could add more.
+
+# TASK: describe the results of this graph.
+
+p + geom_line(aes(group=country)) +
+  facet_wrap(~ continent, ncol = 5)
+
+# QUESTION: what happens when we add the 'ncols' argument to the facet?
+
+# Let's produce a cleaner graph:
+p <- ggplot(data = gapminder, mapping = aes(x = year, y = lifeExp))
+
+x11()
+p + geom_line(color="gray70", aes(group = country)) +
+  geom_smooth(size = 1.1, method = "loess", se = FALSE) +
+  scale_y_log10(labels=scales::dollar) +
+  facet_wrap(~ continent, ncol = 5) +
+  labs(x = "Year",
+       y = "Life Expectency",
+       title = "Life Expectency on Five Continents")
+# Still needs some work but not bad...
+
+# The facet_wrap() function is best used when you want multiple plots based on a single 
+# categorical variable. If you a more complex graph, like one based on a contingency table,
+# it is best to use the facet_grid() function.
+
+# Load in the General Social Survey (GSS) 2016 data
+
+library(socviz) # load in socviz suite of data sets and other resources
+library(tidyverse) # load in tidyverse suite of packages
+
+gss_sm
+str(gss_sm)
+glimpse(gss_sm) # we have a good deal more categorical variables we can work with
+# See http://gss.norc.org/ for more information about the survey. It is roughly equivalent
+# to the Understanding Society survey in the UK.
+
+# Let's explore the association between respondent age and number of offspring:
+p <- ggplot(data = gss_sm, mapping = aes(x = age, y = childs))
+
+x11()
+p + geom_point(alpha = 0.2) +
+  geom_smooth() +
+  facet_grid(sex ~ race)
+# Note the syntax of facet_grid(): we are essentially saying "give us a plot of age and offspring, by sex and race.
+
+# QUESTION: what can you say about the relationship between age and offspring, and how it
+# is mediated by a respondent's sex and race?
+
+x11()
+p + geom_point(alpha = 0.2) +
+  geom_smooth() +
+  facet_grid (~ race + sex)
+
+# QUESTION: what is the difference between using (sex ~ race) and (~ sex + race)?
+
+# TASK: explore the gss_sm data set and produce a multi-way graph of two numeric variables
+# disaggregated by one or more categorical variables. Write a note summarising the results
+# of this graph.
+
+
+# 4.1.3 Transforming
+
+# Some geom_() functions perform some work on the data before presenting the results.
+
+# Every geom_() function has an associated stat_() function e.g. the geom_smooth() function
+# allows us to specify different methods for drawing a line that summaries the data points.
+
+# The reverse is also true: every stat_() function has a geom_() function.
+
+# Let's dig into this in more detail:
+
+char_reg <- read_csv("./data_raw/extract_main_charity.csv") # load in charity register
+names(char_reg)
+
+# Let's distinguish between unincorporated and incorporated charities:
+char_reg <- char_reg %>% 
+  mutate(comp = ifelse(!is.na(coyno), 1, 0)) # create a dummy variable to identify companies
+
+char_reg$comp <- as.factor(char_reg$comp) # convert numeric variable to categorical
+table(char_reg$comp) # ~ 35,000 charities are incorporated
+
+char_reg$incy <- year(char_reg$incomedate) # extract the year from "incomedate"
+head(char_reg$incy)
+
+# Graph distribution of company status
+
+p <- ggplot(data = char_reg,
+            mapping = aes(x = comp))
+
+p + geom_bar() 
+# geom_bar() calculates and plots the counts/frequencies for the categories; what if we wanted proportions instead?
+
+p + geom_bar(mapping = aes(y = ..prop..))
+# Behind the scenes geom_bar() has called on its default stat_() function to produce
+# two temporary variables: ..count.. and ..prop..
+# They are bookended by full stops to distinguish them from real variables in the data set.
+
+# QUESTION: why do you think each bar sums to 1?
+
+# Let's try fixing the summing issue:
+p + geom_bar(mapping = aes(y = ..prop.., group = 1)) # that's better
+
+# Adding the 'group = 1' argument tells geom_bar() to treat the data set as a single group. That is, what proportion of
+# the total observations are companies.
+
+# Let's get more familiar with transforming the data underlying plots:
+
+# Create a variable capturing charity size
+char_reg$inc_cat <- cut(char_reg$income, breaks = c(0,25000,500000, Inf), labels = c("Small", "Medium", "Large"))
+table(char_reg$inc_cat) # frequency table of charity size
+
+p <- ggplot(data = char_reg,
+            mapping = aes(x = inc_cat, fill = inc_cat))
+
+p + geom_bar() + guides(fill = FALSE) 
+# guides() controls the display of the legend; in this instance we've suppressed the display of this feature.
+
+# Note the "NA" category - remember that this value represents missing data. Let's drop these observations from the data set:
+char_reg_sub <- char_reg %>% 
+  filter(!is.na(inc_cat))
+
+# Now let's disaggregate charity size by a second categorical variable (company status):
+p <- ggplot(data = char_reg_sub,
+            mapping = aes(x = inc_cat, fill = inc_cat))
+
+p + geom_bar(mapping = aes(y = ..prop.., group = 1)) +
+  facet_wrap(~ comp) +
+  guides(fill = FALSE) 
+
+# QUESTION: what can you say about the relationship between charity size and company status?
+
+# TASK: try and add colour and labels to the above graph.
+
+# Let's take a quick look at histograms and their stat_() functions:
+char_reg$linc <- log(char_reg$income) # transform income using the natural log
+
+# QUESTION: why do we transform income using the natural log?
+
+p <- ggplot(data = char_reg,
+            mapping = aes(x = linc))
+p + geom_histogram(bins = 10)
+
+# TASK: change the number of bins and describe the effect on the display of the information.
+
+# Transforming data is vary useful step in producing effective visualisations.
+# However, it is often easier to transform the data prior to calling the ggplot command;
+# we'll see how this is done over the next couple of activities.
+
+
+### END OF ACTIVITY FOUR [ACT004] ###
+
+
+
+##############################################
+
+
+##############################################
+
+
+
+# 5. Refining Graphical Presentations [ACT005] #
+
+# In this section we build on our considerable plotting skills in two ways:
+
+# 1. Adding and adjusting the design elements of the plot (e.g. labels, annotations).
+
+# 2. Getting our data in better shape prior to plotting. 
+
+
+# 5.1 Plotting text
+
+library(lubridate)
+library(gapminder)
+gapminder
+glimpse(gapminder)
+
+table(gapminder$continent)
+levels(gapminder$continent)
+
+# Let's examine life expectancy:
+lexp_analysis <- gapminder %>%
+  filter(pop < 5000000) %>%
+  group_by(country) %>%
+  summarise(lexp_mean = mean(lifeExp, na.rm = TRUE),
+            pop_mean = mean(pop, na.rm = TRUE))
+
+# TASK: describe what the above piping command is doing.
+
+p <- ggplot(data = lexp_analysis,
+            mapping = aes(x = pop_mean, y = lexp_mean))
+
+x11()
+p + geom_point() + geom_text(mapping = aes(label = country)) # doesn't look great; let's make some tweaks
+
+p + geom_point() + geom_text(mapping = aes(label = country), hjust = 0) # right-justify the text
+# This isn't a visually pleasing graph but you can see how labelling the text would be beneficial if
+# there were only a few points or lines plotted on a graph.
+
+# The default geom_text() function is a bit awkward to use; better to employ a user-written package called ggrepel():
+# install.packages("ggrepel")
+library(ggrepel)
+
+char_fin <- read_csv("./data_raw/extract_financial.csv") # load in charity financial records
+names(char_fin)
+
+# Let's plot the association between income and expenditure in 2015, disaggregated by charity size
+
+# Create a categorical variable of charity size
+
+char_fin$inc_cat <- factor(cut(char_fin$income, breaks = c(0,25000,500000, Inf), labels = c("Small", "Medium", "Large")))
+table(char_fin$inc_cat) # the charity sector is mainly composed of smaller organisations
+head(char_fin$inc_cat)
+
+char_fin$year <- year(char_fin$fyend) # extract the year from "fyend"
+table(char_fin$year)
+
+char_fin$linc <- log(char_fin$income)
+char_fin$lexp <- log(char_fin$expend) # create log versions of income and expenditure
+
+set.seed(1) # set the seed i.e. ensure random samples are the same each time they are produced (useful for replicating data)
+char_fin_sub <- char_fin %>% 
+  filter(year == 2015 & !is.na(inc_cat)) %>% 
+  sample_n(30) # keep a random sample of 30 observations
+
+char_fin_sub
+
+# TASK: see if the seed has been set by re-running the above code. Do you get the same observations each time?
+
+# Create our base plot object
+
+p <- ggplot(data = char_fin_sub, mapping = aes(x = lexp, y = linc, label = inc_cat)) # note we need to specify the label option
+
+## Draw the plot
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 1, color = "red") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 1, color = "red") +
+  geom_point() +
+  geom_text_repel() + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "?")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "?")) # add "?" signs to the axes labels
+                     
+# Add labels and other useful information                     
+                     
+p_title <- "Charity Income and Expenditure"
+p_subtitle <- "2015"
+p_caption <- "Random sample of 30 charities reporting income for this year."
+x_label <- "Expenditure (log ?)"
+y_label <- "Income (log ?)"
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 0.8, color = "gray") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 0.8, color = "gray") +
+  geom_point() +
+  geom_text_repel() + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "?")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "?")) + # add "?" signs to the axes labels
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# QUESTION: using this sample of charities, how would you characterise the relationship between income and expenditure?
+# Is there evidence of charities not spending incoming resources?
+
+# TASK: search for help on the geom_text_repel() function; play around the with above graph by altering the each element.
+
+# 5.2. Labelling outliers
+
+# Sometimes we just want to highlight particular data points or cases. We can use geom_text_repel()
+# to do this by telling it to use a subset of the data:
+
+p <- ggplot(data = char_fin_sub, mapping = aes(x = lexp, y = linc, label = regno)) # note we need to specify the label option
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 0.8, color = "gray") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 0.8, color = "gray") +
+  geom_point() +
+  geom_text_repel(data = subset(char_fin_sub, lexp < 4 & linc < 12)) + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "?")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "?")) + # add "?" signs to the axes labels
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# TASK: describe the effect of the addition of subset() to the plot.
+
+# An alternative approach is to create an indicator (dummy) variable and subset by it.
+
+# 5.3. Writing and drawing in the plot area
+
+# Sometimes we are interested in adding our own annotations to the graph, perhaps to 
+# pick out surprising data points or to add some commentary to the patterns observed.
+
+p <- ggplot(data = char_fin_sub, mapping = aes(x = lexp, y = linc)) # note we need to specify the label option
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 0.8, color = "gray") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 0.8, color = "gray") +
+  geom_point() +
+  annotate(geom = "text", x = 4, y = 12, label = "No observations", hjust = 0) + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "?")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "?")) + # add "?" signs to the axes labels
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+# TASK: describe the logic and results of the annotate() function.
+
+# We can also draw shapes on the plot:
+
+x11()
+p + geom_hline(yintercept = median(char_fin$linc), size = 0.8, color = "gray") +
+  geom_vline(xintercept = median(char_fin$lexp), size = 0.8, color = "gray") +
+  geom_point() +
+  annotate(geom = "rect", xmin = 4, xmax = 8, ymin = 4, ymax = 10, fill = "blue", alpha = .3) + # this links with the label option in the base object
+  scale_x_continuous(labels = scales::dollar_format(prefix = "?")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "?")) + # add "?" signs to the axes labels
+  labs(x = x_label, y = y_label, title = p_title, subtitle = p_subtitle,
+       caption = p_caption)
+
+
+# 5.4 Summarising data prior to plotting
+
+# It is usually more awkward and time consuming to rely on geom stat_() functions to summarise our variables
+# during the graphing process. It is better to get into the habit of preparing our data in advance of plotting,
+# using the very handy 'dplyr' package that comes with the 'tidyverse' distribution.
+
+# We have already seen this done throughout the workshop but let's explore a few more examples.
+
+library(socviz) # load in socviz suite of data sets and other resources
+library(tidyverse) # load in tidyverse suite of packages
+
+gss_sm # U.S. General Social Survey
+str(gss_sm)
+glimpse(gss_sm)
+
+table(gss_sm$bigregion, gss_sm$religion) # crosstab of our two variables of interest
+
+# To build our summary table, we need to perform a sequence of tasks on our data set
+# using the pipe operator %>%.
+
+# Let's create a crosstab of religion by region:
+rel_by_reg <- gss_sm %>% 
+  group_by(bigregion, religion) %>%
+  summarize(N = n()) %>%
+  mutate(freq = N / sum(N), pct = round((freq*100), 0))
+
+View(rel_by_reg) # display the summary table we created
+
+# There's a lot going on in the above command, so let's take it piece-by-piece:
+#   1. we create a new object (rel_by_reg)
+#   2. state which data set we are wanting to use (gss_sm)
+#   3. take that data and group it by region and religion (similar to the table() command earlier)
+#   4. summarise this table by creating a new column (N) which is a count of observations
+#   5. create two new variables: proportion and percentage of observations in each category
+
+# TASK: play around with the pipe command we specified (i.e rel_by_reg etc);
+# try removing layers starting at the bottom - how does that effect the final table?
+
+# Let's check if the percentages sum to 100 in our summary table:
+sanity_check <- rel_by_reg %>%
+  group_by(bigregion) %>%
+  summarise(total = sum(pct))
+
+sanity_check # some rounding errors but pretty much correct
+
+p1 <- ggplot(data = rel_by_reg, mapping = aes(x = bigregion, y = pct, fill = religion))
+
+p1a <- p1 + geom_col() +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top") # not bad at all, but let's stack the bars side-by-side:
+
+p1b <- p1 + geom_col(position = "dodge2") +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top")
+
+# QUESTION: why did we use geom_col() instead of geom_bar()?
+
+# I think we can do better; let's swap the x and y axes:
+p2 <- ggplot(data = rel_by_reg, mapping = aes(x = pct, y = bigregion, fill = religion))
+
+p2 + geom_col(position = "dodge2") +
+  labs(x = "Region",y = "Percent", fill = "Religion") +
+  theme(legend.position = "top") # ehh...
+
+# geom_col has an internal logic that prevents simply swapping the axes in the mapping function.
+# Thankfully there is another way:
+p3 <- ggplot(data = rel_by_reg, mapping = aes(x = religion, y = pct, fill = religion))
+
+p3 + geom_col(position = "dodge2") +
+  labs(x = NULL ,y = "Percent", fill = "Religion") +
+  guides(fill = FALSE) + # turns off the legend
+  coord_flip() + # flips the co-ordinates of the plot i.e. swaps the axes (religion and pct)
+  facet_grid(~ bigregion)
+
+# QUESTION: in your opinion, which of the plots communicates the underlying patterns best (p1a, p1b, p2 or p3)?
+# Remember, you can view a plot by calling its object name:
+p1a
+
+
+# 5.5 Continuous data
+
+# Let's apply the piping and plotting techniques to a different data set: organdata
+# The data set contains more than a decade?s worth of information on the donation of organs for transplants in seventeen OECD countries.
+
+organdata
+glimpse(organdata)
+
+# Let's explore a subset of the data set:
+organdata %>% select(1:6) %>% sample_n(size = 20)
+organdata %>% select(country, year, gdp) %>% sample_n(size = 5)
+
+# TASK: describe the results of the above commands.
+
+# TASK: produce a scatterplot of the mean number of organ donors by year and interpret the results.
+
+# Let's explore country-level variation in the mean number of organ donors:
+p <- ggplot(data = organdata, mapping = aes(x = country, y = donors))
+
+p + geom_boxplot() +
+  coord_flip() # pretty good but the lack of a suitable ordering makes it difficult to compare countries
+
+p <- ggplot(data = organdata, 
+            mapping = aes(x = reorder(country, donors, na.rm=TRUE), y = donors))
+
+p + geom_boxplot() +
+  coord_flip() +
+  labs(x = NULL)
+
+# QUESTION: what is the meaning of each component of the reorder() function?
+
+# reorder() automatically calculates the mean of the second variable in the function.
+# TASK: recreate the above boxplot but specify a different summary statistic (e.g. the median, 95th percentile, max etc)
+# NB DMD: figure out how to perform the above TASK
+
+p <- ggplot(data = organdata, 
+            mapping = aes(x = reorder(country, donors, na.rm=TRUE), 
+                          y = donors, fill = world))
+
+p + geom_boxplot() +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(legend.position = "top")
+
+# It is usually good practice to plot the distribution of categorical variables on the y axis.
+# It's been interesting to look at the boxplot distribution of donors but perhaps we can
+# make things simpler by focusing on a single value for this variable.
+
+# First, create a summary table of the variables we want to plot:
+country_analysis <- organdata %>% group_by(consent_law, country) %>%
+  summarise(donors_mn = mean(donors, na.rm = TRUE),
+            donors_sd = sd(donors, na.rm = TRUE),
+            gdp_mn = mean(gdp, na.rm = TRUE))
+
+country_analysis
+
+# TASK: describe the logic and results of the above piping command.
+
+# Second, plot the summary table
+p <- ggplot(data = country_analysis, 
+            mapping = aes(x = reorder(country, donors_mn),
+                          y = donors_mn, color = consent_law))
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  labs(x = NULL, y = "Number of donors (mean)", color = "Consent law") +
+  theme(legend.position = "top")
+
+# QUESTION: are there meaningful country-level differences in the mean number of organ donors?
+# what about by countries with different consent laws?
+
+# Well done, you have combined data wrangling skills with clear, sophisticated plotting specifications
+# to produce an effective visualisation: a Cleveland dotplot. However, there is always room for improvement...
+# Let's rationalise the code that produced our summary table:
+country_analysis <- organdata %>% group_by(consent_law, country) %>%
+  summarise_if(is.numeric, funs(mean, sd, median), na.rm = TRUE)
+
+country_analysis
+str(country_analysis)
+View(country_analysis)
+
+# TASK: describe the logic and results of the new 'country_analysis' piping command.
+
+# The next improvement we can make is to produce separate plots by the 'consent_law' variable:
+p <- ggplot(data = country_analysis, 
+            mapping = aes(x = reorder(country, donors_mean),
+                          y = donors_mean)) # remember the names changed when we allowed R to create the variables
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law)
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") # side-by-side is not very legible; this can be fixed by using the 'ncol' argument as part of facet_wrap()
+
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1)
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") # repetiion of country names across panels; we need to free the y axis to select its own values
+
+
+p + geom_point(size = 4) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1, scales = "free_y")
+labs(x = "Number of donors (mean)", y = NULL) +
+  theme(legend.position = "top") 
+
+# TASK: play around with 'ncol' and 'scales' options.
+
+# As intelligent analysts, you may be critical of the above graph: "Instructor, what use is a
+# point estimate without some knowledge of its variance or error?"
+# Well my learned friends, ggplot() provides just the geom:
+x11()
+p + geom_pointrange(mapping = aes(ymin = donors_mean - donors_sd, ymax = donors_mean + donors_sd)) +
+  coord_flip() +
+  facet_wrap(~ consent_law, ncol = 1, scales = "free_y")
+labs(x = NULL, y = "Number of donors (mean)") +
+  theme(legend.position = "top") 
+
+# TASK: adjust the axis labels to remove the defaulting labelling.
+
+
+### END OF ACTIVITY FIVE [ACT005] ###
+
+
+
+##############################################
+
+
+##############################################
+
+
+
+# 6. Communicating Analytical Results [ACT006] #
+
+# In this section we employ our graphing skills and techniques to the results of statistical models.
+
+# We can do this is two ways:
+# 1. employ modelling techniques as part of the plotting process i.e. directly within geoms.
+# 2. use specialist packages to capture the results of statistical models and pass them to the plot.
+
+
+# 6.1 Estimating Models Within Plots
+
+# We saw earlier in the workshop an example of this approach: using geom_smooth() to  display a line of best of fit on a scatterplot.
+
+library(gapminder)
+library(ggplot2)
+gapminder
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = log(gdpPercap), y = lifeExp))
+
+p + geom_point(alpha=0.1) +
+  geom_smooth(color = "steelblue", fill="steelblue", method = "lm")
+
+p + geom_point(alpha=0.1) +
+  geom_smooth(color = "tomato", method = "lm", size = 1.2, 
+              formula = y ~ splines::bs(x, 3), se = FALSE)
+
+# TASK: describe the difference between the lines fitted for each of these graphs. Which one
+# do you think fits the data better?
+
+# 6.1.1 Fit multiple models on a single graph
+
+# This is easily achieved by stacking multiple geom_smooth() functions:
+p + geom_point(alpha=0.1) +
+  geom_smooth(color = "steelblue", fill="steelblue", method = "lm") +
+  geom_smooth(color = "tomato", method = "lm", size = 1.2, 
+              formula = y ~ splines::bs(x, 3), se = FALSE)
+
+# There is an extra step we need to take in order to display the legend; it doesn't automatically
+# appear as the geom_smooth() functions are not logically connected e.g. they are not categories
+# of a single variable.
+
+# First, load in some color palettes
+
+model_colors <- RColorBrewer::brewer.pal(3, "Set1")
+model_colors 
+
+# Second, adjust the geom_smooth() color and fill specifications
+
+p1 <- p + geom_point(alpha=0.1) +
+  geom_smooth(aes(color = "OLS", fill = "OLS"), method = "lm") +
+  geom_smooth(aes(color = "Poly", fill = "Poly"), method = "lm", size = 1.2, 
+              formula = y ~ splines::bs(x, 3), se = FALSE)
+
+# Third, map the color palette to each geom_smooth()
+
+p2 <- p1 + scale_color_manual(name = "Models", values = model_colors) +
+  scale_fill_manual(name = "Models", values = model_colors) +
+  theme(legend.position = "top")
+
+x11()
+p2
+
+# EXERCISE:
+# 1. Load in "extract_financial.csv".
+# 2. Graph the association between income and expenditure.
+# 3. Plot linear and polynomial lines of best fit to the plot.
+# 4. State which line seems a better fit for the data. 
+
+
+# 6.2 Saving and Graphing Model Results
+
+# In this section we demonstrate how to store and plot the results of a multiple linear regression (OLS) statistical model.
+
+# The techniques demonstrated below also apply to other types of statistical models e.g. logisitic, count regression etc.
+
+# If you are interested in learning more about modelling in R, you can access the materials from our Predictive Analytics
+# course [https://github.com/DiarmuidM/aqmen-predictive-analytics-in-R]; 
+# we also recommend Gelman and Hill (2018), Data Analysis Using Regression and Multilevel/Hierarchical Models.
+
+# 6.2.1 How model results are stored
+
+# The good news: model results, just like tables, graphs, data frames etc, are stored as objects in R;
+# the bad news is they have a slightly more complicated structure...
+
+# First, let's regress life expectancy on a couple of independent variables
+out <- lm(formula = lifeExp ~ gdpPercap + pop + continent,
+          data = gapminder)
+out
+
+summary(out) # look at values of this object
+str(out) # look at the internal structure of this object
+attributes(out) # look at the attributes of this object
+
+# The attributes() function gives us a better sense of the model results; let's explore some:
+out$coefficients # model coefficients (in an unhelpful format though)
+out$model # data underpinning the model
+out$effects # estimated effects for each observation
+out$df.residual # degrees of freedom
+?lm # see the 'Values' section for a description of each element of the out object
+
+# 6.2.1 Some general tips for presenting the results of statistical models
+
+# 1. Focus on the substantive interpretation of your findings
+# 2. Communicate model uncertainty
+# 3. Show the underlying data where possible
+
+
+# 6.3. Graphing Statistical Models
+
+# We will make use of David Robinson's 'broom' package to help us extract model results
+# and graph them with ggplot2.
+
+library(lubridate)
+library(car)
+library(broom)
+?broom
+vignette("broom")
+# 'broom' is a supremely useful package that operates at three levels:
+# - component-level i.e. model coefficients and significance values
+# - observation-level i.e. fitted values for each observation in the data
+# - model-level i.e. model summary statistics (e.g. R-squared, F test)
+
+
+# 6.3.1 Estimate OLS model
+
+# RQ: What factors predict a charity's income?
+# Data: Scottish Charity Register, which is an open data set provided by the regulator for Scotland (OSCR)
+# Why is it of interest?: long-standing policy concern about big charities and their dominance of the sector (see Backus & Clifford, 2013)
+
+# We'll brush past most of the intensive data wrangling work that is a neccessary precursor to estimating models.
+
+# Import the data
+
+scot_char <- read_csv("./data_raw/oscr_scr_20190226.csv") # import the csv into R
+scot_char # get a basic summary of the "scot_char" object
+
+# Keep relevant variables
+
+scot_char_subset <- select(scot_char, `Charity Number`, `Registered Date`, `Charity Status`, `Constitutional Form`,
+                           `Parent charity number`, `Most recent year expenditure`, `Geographical Spread`, 
+                           `Most recent year income`)
+scot_char_subset
+# Note how we needed to enclose the variable names in backticks ("``"). This is because R and other languages have trouble
+# parsing variables or objects with spaces in their names. We'll rename the variables in the next block of code.
+
+# Rename variables
+
+scot_char_subset <- rename(scot_char_subset, charnum = `Charity Number`, inc = `Most recent year income`, exp = `Most recent year expenditure`,
+                           regd = `Registered Date`, charstatus = `Charity Status`, lform = `Constitutional Form`,
+                           aoo = `Geographical Spread`, pchar = `Parent charity number`)
+scot_char_subset
+# The first argument of rename() takes an object or data frame, and then a list of variables to rename.
+
+# Check values of variables
+
+scot_char_subset$lform <- factor(scot_char_subset$lform)
+scot_char_subset$lform <- relevel(as.factor(scot_char_subset$lform), ref = 10) # set the reference category to Unincorporated associations
+
+scot_char_subset$charstatus <- factor(scot_char_subset$charstatus)
+
+scot_char_subset$aoo <- as.factor(scot_char_subset$aoo)
+scot_char_subset$aoo_r <- factor(recode(as.integer(scot_char_subset$aoo),"c(1,8)=1; c(2,3)=2; c(4,6)=3; c(5,7)=4")) # recode values of this variable to produce local, regional, national and overseas categories
+table(scot_char_subset$aoo_r)
+
+# Drop inactive charities
+
+scot_char_analysis <- scot_char_subset %>%
+  filter(charstatus == "Active") # keep all observations where charity status is "Active"
+
+# Drop charities with zero income
+
+scot_char_analysis <- scot_char_subset %>%
+  filter(inc > 0)
+
+# Create measure of charity age
+
+scot_char_analysis$regy <- year(scot_char_analysis$regd) # extract year from date
+scot_char_analysis$charage <- 2019 - scot_char_analysis$regy # calculate age
+
+# Natural log of income
+
+scot_char_analysis$linc <- log(scot_char_analysis$inc)
+
+# Estimate a multivariate linear regression
+
+# We'll specify the following model: estimate income as a function of a charity's legal form (categorical), 
+# its area of operation (categorical), and its organisational age (metric).
+
+mod1 <- lm(formula = linc ~ charage + lform + aoo_r,
+           data = scot_char_analysis) # regress income on legal form, area of operation, and age
+summary(mod1)
+
+# OK, now we are ready to graph the results of the model:
+
+# 6.3.1.1 Component-level statistics
+
+mod1_com <- tidy(mod1, conf.int = TRUE) # use `broom`'s tidy() function to extract model coefficient information
+mod1_com # now we have a summary table of regression coefficients from our model; let's do some further tidying up before graphing
+
+mod1_com <- filter(mod1_com, term != "(Intercept)") # remove the intercept from the model table
+mod1_com$term <- str_replace(mod1_com$term, "lform", "") # remove the 'lform' prefix from the values of 'term'
+mod1_com$term <- str_replace(mod1_com$term, "aoo_r2", "Regional")
+mod1_com$term <- str_replace(mod1_com$term, "aoo_r3", "National")
+mod1_com$term <- str_replace(mod1_com$term, "aoo_r4", "Overseas") # replace with the proper names of the categories
+
+# Plot the results of the regression
+
+p <- ggplot(mod1_com, mapping = aes(x = reorder(term, estimate), y = estimate, ymin = conf.low, ymax = conf.high))
+
+x11()
+p + geom_pointrange() + 
+  coord_flip() +
+  geom_hline(yintercept = 0, size = 1, color = "red")
+
+# TASK: describe what each component of the above plot is doing.
+
+# TASK: add informative labels to the above graph, and change the size and color of the points.
+
+
+# 6.3.1.2 Observation-level statistics
+
+# We can calculate and plot predicted outcomes for individuals and groups in our data:
+mod1_obs <- augment(mod1, data = scot_char_analysis) # augment collects observation-level model results (e.g. predicted outcomes)
+View(mod1_obs)
+
+# augment() returns the following additional variables (Healy, 2019):
+# .fitted ? The fitted values of the model
+# .se.fit ? The standard errors of the fitted values
+# .resid ? The residuals
+# .hat ? The diagonal of the hat matrix
+# .sigma ? An estimate of residual standard deviation when the corresponding observation is dropped from the model
+# .cooksd ? Cook?s distance, a common regression diagnostic
+# .std.resid ? The standardized residuals
+
+# We can now graph the observation-level results of the model:
+p <- ggplot(data = mod1_obs,
+            mapping = aes(x = .fitted, y = .std.resid))
+
+p + geom_point()
+
+# QUESTION: do you think a basic OLS is a good fit for the data: whay or why not?
+
+# TASK: graph predicted values of the outcome against other variables in the mod1_obs table (e.g. charity age, linc).
+
+
+# 6.3.1.3 Model-level statistics
+
+glance(mod1) # produces a table of model summary statistics
+
+# This doesn't look immediately useful - why would we want to graph the summary statistics for one model?
+# However, the utility of glance() is evident when estimating and comparing multiple models.
+
+# To illustrate the power of glance(), let's switch back to the gapminder data set.
+
+library(socviz) # load in the socviz package
+
+# For example, let's estimate a model on observations relating to European countries in 1977:
+eu77 <- gapminder %>% filter(continent == "Europe", year == 1977)
+
+fit <- lm(lifeExp ~ log(gdpPercap), data = eu77)
+summary(fit)
+
+# TASK: produce and graph component and observation-level statistics for this model.
+
+# Estimating models in this manner could lead to quite a bit of redundant code: for instance,
+# we would have to create a subset of the data for every continent and year.
+# Best if we use a new command, nest(), coupled with a piping command to create subsets automatically:
+subsamp <- gapminder %>% 
+  group_by(continent, year) %>%
+  nest()
+
+subsamp
+
+# QUESTION: what do you think the values of the variable 'data' represent?
+
+# TASK: explore the values and class of 'data' variable.
+
+# We can also work backwards i.e. unnest the data set:
+subsamp %>% 
+  filter(continent == "Europe", year == 1977) %>%
+  unnest()
+
+# O.K. we're almost ready to estimate and graph multiple models
+
+# First, create a function for estimating a simple linear regression (one predictor):
+
+fit_ols <- function(df) {
+  lm(lifeExp ~ log(gdpPercap), data = df)
+}
+
+# The above is user-defined function called fit_ols; it takes one argument (df), which is used
+# to identify the data underpinning the model.
+
+# Second, we map the regression function to each row in the data column:
+
+regout <- gapminder %>%
+  group_by(continent, year) %>%
+  nest() %>%
+  mutate(model = map(data, fit_ols))
+
+# Let's take a moment to unpick the above command:
+# 1. We create an object to store the results of the piping command (regout)
+# 2. We group the gapminder data by continent and year
+# 3. We nest the rows underlying the group_by command 
+#   e.g. Europe 1977 is made up of individual observations for multiple countries
+# 4. We create a new list variable called model that stores the results of the regression commands
+
+View(regout)
+regout$model
+
+# QUESTION: how many regression commands were executed?
+
+# Finally, we can extend our piping command to extract model summary statistics:
+regsum <- gapminder %>%
+  group_by(continent, year) %>%
+  nest() %>%
+  mutate(model = map(data, fit_ols)) %>%
+  mutate(tidied = map(model, tidy)) %>% 
+  unnest(tidied, .drop = TRUE) %>% 
+  filter(term %nin% "(Intercept)" & continent %nin% "Oceania")
+
+# Note the use of "%nin%. It does the opposite of %in% and selects only the items in a first vector of characters that are not in the second.
+# In the above code, we only keep values of the variable "term" that do not equal "(Intercept)". It is a similar logic for continent and "Oceania".
+
+regsum
+summary(regsum)
+
+# TASK: describe the additional commands we have included in the above code i.e. from the second mutate command to the end.
+
+# Phew! A lot of clever work has gone into getting some model summary statistics ready for the fun part: plotting :)
+
+p <- ggplot(data = regsum, mapping = aes(x = year, y = estimate,
+                                         ymin = estimate - 2*std.error,
+                                         ymax = estimate + 2*std.error,
+                                         group = continent, color = continent))
+
+x11()
+p + geom_pointrange(position = position_dodge(width = 1)) +
+  scale_x_continuous(breaks = unique(gapminder$year)) + 
+  theme(legend.position = "top") +
+  labs(x = "Year", y = "Estimate", color = "Continent")
+
+# QUESTION: how would you characterise the effect of GDP on life expectancy, over time and across continents?
+
+
+# As you can probably surmise, graphing the results of statistical models is tricky, in as much
+# as the plotting elements are fairly standard but you must have a good grasp of the 
+# purpose, mechanics and results of the model being estimated. 
+
+# ggplot() is not your only option and we encourage to explore the use of base R plots and the coefplot() library.
+
+
+# EXERCISE:
+# 1. load in the "extract_financial.csv" data set.
+# 2. Estimate a linear regression model, using log expenditure to predict log income.
+# 3. Estimate the same linear regression model for each year.
+# 4. Graph the coefficient of log expenditure across all of the models.
+
+
+### END OF ACTIVITY SIX [ACT006] ###
+
+
+
+##############################################
+
+
+##############################################
+
+
+
+# 7. Further Adventures in Graphing [ACT007] #
+
+# In this section we build on the foundations we've laid earlier by adding layers of sophistication to our plots.
+# We will learn new geom_() functions and how to combine them effectively; move away from ggplot's default options and
+# start customising our graphs; and delve deeper into the scale(), guide() and theme() functions.
+
+
+# 7.1 New geom() Plots
+
+# 7.1.1 geom_freqpoly()
+
+# Representing multiple histograms in a single plot is made easy by using the geom_freqpoly() function
+
+library(gapminder)
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = lifeExp, colour = continent))
+
+p + geom_freqpoly() # represents a histogram using lines instead of bars but is otherwise equivalent
+
+# TASK: change the bin width of the histogram.
+
+# QUESTION: can you make meaninful comparisons between the distributions of the life expectancy for each continent? Why or why not?
+
+# Let's tweak the default stat_() function:
+p <- ggplot(data = gapminder,
+            mapping = aes(x = lifeExp, y = ..density.., colour = continent))
+
+p + geom_freqpoly() 
+
+# TASK: describe what effect 'y = ..density..' has on the graph, especially in terms of making comparisons between distributions.
+
+
+# 7.1.2 geom_area()
+
+# An area plot is analogous to a stacked bar chart and is used to show how the composition of something varies over a range.
+
+# For example, how much of total sector income is accounted for by the largest charities, and has the composition varied over time?
+
+char_fin <- read_csv("./data_raw/extract_financial.csv") # load in charity financial records
+names(char_fin)
+
+# Create a categorical variable from income
+
+char_fin$inc_cat <- factor(cut(char_fin$income, breaks = c(0,25000,500000, Inf), labels = c("Small", "Medium", "Large")))
+table(char_fin$inc_cat) # the charity sector is mainly composed of smaller organisations
+head(char_fin$inc_cat)
+
+char_fin$year <- year(char_fin$fyend) # extract the year from "fyend"
+table(char_fin$year)
+
+char_fin <- char_fin %>% 
+  filter(year > 2003 & year < 2017) %>% # drop years for which we have too few observations
+  filter(!is.na(inc_cat))
+
+# Now we create a data set containing summary statistics:
+
+char_fin_sum <- char_fin %>%
+  group_by(year, inc_cat) %>% # collpase the data set by year and charity size
+  summarise(income = sum(income)) # create a new variable that is the sum of income for each combination of year and size
+
+View(char_fin_sum) # check the piping command produced a summary data set
+
+p <- ggplot(data = char_fin_sum, mapping = aes(x = year, y = income, fill = inc_cat))
+
+x11()
+p + geom_area()
+
+# Total income has risen over time (in absolute terms) and it looks as if the largest charities have preserved their share of total income.
+
+
+# 7.1.3 geom_tile()
+
+# Let's use the built-in "diamonds" data set to create a tile plot:
+
+diamonds %>% 
+  count(color, cut) %>%  
+  ggplot(mapping = aes(x = color, y = cut)) +
+    geom_tile(mapping = aes(fill = n))
+
+# TASK: describe the plot produced by this command; what does it tell you about combinations of diamond colour and quality?
+
+# There are a multitude of other plot types offered by ggplot2; take a look at the cheatsheet on the workshop
+# Github repository for an outline of other plots.
+
+
+# 7.2 Customisation
+
+# 7.2.1 Using colour effectively via the scale() function
+
+# We spoke earlier in the workshop about using colours intelligently. For example,
+# the categories of an unordered categorical variable require distinct colours, while
+# an ordered variable is better served by the use of gradation.
+
+# The default options of ggplot() are usually appropriate but we may want to specify our
+# own preferences via the scale() function and the RColorBrewer package.
+
+# Let's explore different colour palettes using the organdata data set:
+install.packages("RColorBrewer")
+library(RColorBrewer)
+
+x11()
+display.brewer.all() # view the palettes available via RColorBrewer
+
+# Notice we have three types of palettes:
+# 1. Sequential
+# 2. Qualitative
+# 3. Divergent
+
+p <- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors, color = world))
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Set2") +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Pastel2") +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) + scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "top")
+
+# TASK: use different palettes with the above graphs; which is best for converying differences
+# between types of countries?
+
+# It is possible to create your own colour palettes in R; see this article for more information:
+# [https://data.library.virginia.edu/setting-up-color-palettes-in-r/]
+
+
+# 7.2.2 Changing the appearance of a graph via the theme() function
+
+# Combining ggplot() and the theme() function grants us considerable flexibility in how
+# we construct the design elements of the plot. It also allows us to adopt standardised
+# themes for our graphs e.g. Economist or Wall Street Journal graphics.
+
+# First things first: let's get rid of the awful grey grid background of our graphs...
+
+p <- ggplot(data = organdata,
+            mapping = aes(x = roads, y = donors, color = world))
+
+p + geom_point(size = 2) +
+  theme_bw() +
+  theme(legend.position = "top",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) # the "panel.grid.minor" option removes the grid lines from the plot
+
+p + geom_point(size = 2) +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+p + geom_point(size = 2) +
+  theme_grey() +
+  theme(legend.position = "top")
+
+# Let's load in some new themes and apply them:
+
+install.packages("ggthemes")
+library(ggthemes)
+
+p + geom_point(size = 2) +
+  theme_economist() +
+  theme(legend.position = "top")
+
+# It is also possible to adjust the default options associated with a theme:
+p + geom_point(size = 2) +
+  theme_economist() +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 30)) # adjust the size of the legend title
+
+# "Flashy" themes like the Economist or WSJ are all well and good for one-off posters etc
+# but you may want to focus on plainer plots for academic publications. The cowplot package
+# provides a theme suitable for such publications.
+
+install.packages("cowplot")
+library(cowplot)
+?cowplot # the help documentation is not very useful!
+
+p + geom_point(size = 2) +
+  theme_cowplot() +
+  theme(legend.position = "top")
+
+
+# Finally, my favourite theme: BBC graphics
+
+devtools::install_github('bbc/bbplot') # install BBC graphics package; you may get a prompt to update other packages - just ignore by pressing enter in the console window
+
+library(bbplot)
+library(gapminder)
+library(tidyverse)
+
+line_df <- gapminder %>%
+  filter(country == "Malawi") # restrict observations to Malawi
+
+line <- ggplot(line_df, aes(x = year, y = lifeExp)) +
+  geom_line(colour = "#1380A1", size = 1) +
+  geom_hline(yintercept = 0, size = 1, colour="#333333") +
+  bbc_style() +
+  labs(title="Living longer",
+       subtitle = "Life expectancy in Malawi 1952-2007")
+
+x11()
+line # display the plot
+
+# bbplot also contains a function for saving and refining your graph:
+finalise_plot(plot_name = line,
+              source = "Source: Gapminder",
+              save_filepath = "./figures/malawi_life-exp_1952-2007.png",
+              width_pixels = 640,
+              height_pixels = 450)
+
+# If you reach the end of this activity with time to spare, then we suggest reading through
+# further examples of how to use bbplot's functions: [https://bbc.github.io/rcookbook/]
+
+
+
+# 7.3 Bits and Bobs
+
+# Let's take a quick look at some other useful tips and tricks when plotting data.
+
+
+# 7.3.1 Focusing on a particular area of a graph 
+
+# We can zoom in on a plot using coord_cartesian():
+contdata <- gapminder %>%
+	group_by(continent, year) %>%
+	summarise(mn_lifeExp = mean(lifeExp), mn_loggdp = mean(log2(gdp)))
+
+p <- ggplot(data = contdata,
+		mapping(aes(x = mn_loggdp, y = mn_lifeExp)
+
+p + geom_point() # let's zoom in a particular area of the plot:
+
+p + geom_point() + coord_cartesian(ylim = c(0, 50))
+
+# This approach doesn't throw away any data, it simply focuses on a particular range of values for either the y or x axis.
+
+# To restrict the range of values included in the plot, we use the xlim() and ylim() functions:
+
+p + geom_point() + ylim(0, 50) # this removes observations with values outwith the range specified
+
+# Of course, you can always filter your data to produce a subset of observations in a desired range.
+
+
+# 7.3.2 Dealing with two y-axes
+
+# It's usually not good practice to plot lines representing different time series on two axes - 
+# there is too much potential for misleading e.g. altering the y scales to display an
+# apparent correlation.
+
+# Instead, you can do the following:
+# - display the line graphs side-by-side (i.e. use faceting)
+# - create an index of each time series and plot both lines on the same y-axis
+
+# To see this ploy in action (deliberately), spend a few minutes on 
+# Tyler Vigen's website "Spurious Correlations" [http://www.tylervigen.com/spurious-correlations]
+
+
+### END OF ACTIVITY SEVEN [ACT007] ###
+
+# If you've finished ahead of time then please use this opportunity to revisit
+# troublesome topics/commands and ask the tutors plenty of questions.
+
+
+##############################################
+
+
+##############################################
+
+
+
+# Final Thoughts #
+
+# Congratulations on progressing through the workshop. Our aim was to equip you, as rapidly and painlessly as possible,
+# with a proficiency in data visualisation using R.
+
+# While you have covered a great deal of material and skills, there is a bigger and badder world of R programming and visualisation out there.
+
+# Here are some suggestions for where you might go next in your skills development:
+#	- Wanting to delve deeper into ggplot2? Consult ggplot2: Elegant Graphics for Data Analysis [https://www.amazon.com/dp/331924275X/ref=cm_sw_su_dp]	
+#
+#	- Looking for new plot types? Check out [https://www.ggplot2-exts.org/], which keeps track of ggplot2 extensions developed by R users.
+#	(They even have a theme that makes your R plots look like Stata graphs, in case you're having withdrawal symptoms)
+
+#	- We didn't cover an increasingly prominent area of data visualisation: graphing spatial data.
+#		o Chapter 7 of Data Visualization: A Practical Introduction demonstrates how to use ggplot for drawing maps [http://socviz.co/maps.html#maps]
+#		o The U.K. Consumer Data Research Centre (CDRC) provides introductory material on using R for working with spatial data [https://data.cdrc.ac.uk/dataset/an-introduction-to-spatial-data-analysis-and-visualisation-in-r]
+
+# 	- Take a look at some of the suggested resources on workshop Github repository [https://github.com/DiarmuidM/aqmen-data-visualisation-in-R/tree/master/resources].
+
+# Hopefully this workshop has gone some way to convincing you of the value of adopting
+# social science approaches and tools for data science work; if not then let us know how we can improve;
+# if so then please engage with us on further topics and tools e.g. Social Network Analysis, Reproducible Data Analytics.
+
+# Good luck with future data visualisation and analytics work.
+
+
+# "Big wheels rolling through fields
+# Where sunlight streams
+# Meet me in a land of hope and dreams"
+
+# - Bruce Springsteen, Land of Hope and Dreams (2012)
+
+
+########################################### FIN ##################################################
+
