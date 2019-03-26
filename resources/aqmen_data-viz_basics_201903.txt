@@ -7,3 +7,6 @@ MACHINE: Desktop/aqmen_training/data_viz_2019
 
 SOFTWARE: Anaconda Navigator
 
+FOLDER: aqmen_training
+SUBFOLDER: data_viz_2019
+

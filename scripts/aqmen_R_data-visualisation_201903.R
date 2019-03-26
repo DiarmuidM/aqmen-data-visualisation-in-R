@@ -804,9 +804,16 @@ unclass(auto$foreign) # Domestic = 1; Foreign = 2
 x11() # opens a bigger window in which to display graphs
 ggplot(data = auto) + geom_bar(mapping = aes(auto$foreign)) 
 
+x11()
 ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$foreign)) # add colour to the bars based on categories of foreign
+
+x11()
 ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78)) # add colour to the bars based on categories of rep78; the result is a stacked bar chart
+
+x11()
 ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "fill") # stacked bars of same height
+
+
 ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78), position = "dodge") # place bars side-by-side
 
 
@@ -814,10 +821,15 @@ ggplot(data = auto) + geom_bar(mapping = aes(x = auto$foreign, fill = auto$rep78
 
 x11()
 ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg)) # narrows bins result in gaps
+
+x11()
 ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4)
+
+x11()
 ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg), binwidth = 4, fill = "red") # add colour to the graph
 
 # Histogram diassgregated by a second variable:
+x11()
 ggplot(data = auto) + geom_histogram(mapping = aes(auto$mpg, fill = auto$foreign), binwidth = 4)
 # Note how we moved the fill option inside the aes() function.
 
@@ -868,27 +880,11 @@ ggplot(data = auto) + geom_point(mapping = aes(x =auto$price, y = mpg, shape = f
 # We've introduced a number of different aesthetic options in the above graphs:
 #	- color
 #	- shape
-# 	- size
+# - size
 #	- transparency (alpha = )
 
 # Keep these in mind as we progress, we'll also introduce other options that alter the display of the plots.
 
-
-# New R functions used in this section:
-
-#	- length() - return the length of an object
-#	- rm() - remove an object from the workspace environment
-#	- read_csv() - import csv files into R
-#	- export_csv() - export data as csv files from R
-#	- read_excel() - import xls/xlsx files into R
-#	- write_xlsx() -  export data as xls/xlsx files from R
-#	- options() - change default R settings
-#	- ls() - list objects in workspace environment
-#	- str() - examine the structure of an object
-#	- factor() - create a categorical variable
-#	- class() - return an object's class
-#	- as_tibble() - create a tibble data frame
-#	- data.frame() - create a data frame
 
 
 ##############################################
@@ -935,7 +931,6 @@ str(char_reg) # examine the structure of the data set
 attributes(char_reg) # list the attributes (i.e. metadata) of the data set
 ncol(char_reg) # number of columns
 nrow(char_reg) # number of rows
-order(char_reg$regno) # sort the data set by ascending order of charity number
 
 # We can also add a label or comment to the dataset:
 comment(char_reg) <- "This dataset contains observations for registered charities in England & Wales (February 2019)"
@@ -1007,7 +1002,7 @@ summary(char_reg_fil$income)
 
 View(char_reg[char_reg$income >=100000000 & !is.na(char_reg$income), ])
 # Note the use of "[]" as another means of subsetting the data set. The above command displays the observations where
-# income is greater than ?100m and income is not missing.
+# income is greater than £100m and income is not missing.
 
 # TASK: drop the "char_reg_sub" and "char_reg_fil" objects from the workspace.
 
@@ -1016,7 +1011,7 @@ View(char_reg[char_reg$income >=100000000 & !is.na(char_reg$income), ])
 distinct(char_reg) # drops duplicate rows from the data set
 
 char_reg %>%
-  distinct(regno) # drop rows where there are duplicates of charity number; what is this new symbol %>%?
+  distinct(regno, .keep_all = TRUE) # drop rows where there are duplicates of charity number; what is this new symbol "%>%?"
 
 # Piping
 
@@ -1024,12 +1019,12 @@ char_reg %>%
 # data as an input, transfers it into some functions, and converts it into some results (like a pipeline). 
 # In the words of Healy (2019):
 # "A pipeline is typically a series of operations that do one or more of four things:
-#   1. Group the data into the nested structure we want for our summary, such as ?Religion by Region? or ?Authors by Publications by Year?.
+#   1. Group the data into the nested structure we want for our summary, such as “Religion by Region” or “Authors by Publications by Year”.
 #   2. Filter or select pieces of the data by row, column, or both. This gets us the piece of the table we want to work on.
 #   3. Mutate the data by creating new variables at the current level of grouping. This adds new columns to the table without aggregating it.
 #   4. Summarize or aggregate the grouped data. This creates new variables at a higher level of grouping. For example we might calculate means with mean() or counts with n(). This results in a smaller, summary table, which we might do more things on if we want."
 
-# However, this is simply a taster of the tasks that can be performed while piping.
+# However, this is simply a taster of the tasks that can be performed using the pipe operator.
 
 # The pipe operator = %>% (Ctrl + Shift + M)
 
@@ -1082,7 +1077,6 @@ nrow(char_reg_nomiss)
 
 # We can exclude missing values from calculations and functions as follows:
 mean(char_reg$income)
-
 # QUESTION: why is the mean() function not returning a numeric value?
 
 mean(char_reg$income, na.rm = TRUE)
@@ -1095,6 +1089,10 @@ char_reg$income[char_reg$income==-9] <- -NA # recode -9 as missing
 
 # TASK: recode 0 as missing for income.
 
+# How you conceptualise and handle missing data has significant implications for the validity of your findings.
+# We suggest reading some of the guidance provided by UCLA's Institute for Digital Research and Education (IDRE)
+# [https://stats.idre.ucla.edu/stata/seminars/mi_in_stata_pt1_new/]
+
 
 # 2.6 Saving Data
 
@@ -1104,11 +1102,6 @@ write_rds(char_reg, "./data_clean/ew-charity-register-201902.rds") # save as an 
 write_csv(char_reg, "./data_clean/ew-charity-register-201902.csv")
 
 read_rds("./data_clean/ew-charity-register-201902.rds") # load in the clean data file
-
-
-# New R functions used in this section:
-
-# NOT COMPLETED!!
 
 
 # EXERCISE: 
@@ -1192,6 +1185,7 @@ gapminder
 summary(gapminder$gdpPercap)
 summary(gapminder$lifeExp) # summarise our two variables of interest
 
+x11()
 p <- ggplot(data = gapminder,
             mapping = aes(x = gdpPercap,
                           y = lifeExp))
@@ -1315,15 +1309,15 @@ ggsave("./figures/mylovelygraph.pdf", plot = p_out, height = 8, width = 12) # sa
 # 12 tablespoons vegetable oil / I prefer beef dripping
 
 # 1. Whisk the eggs, flour, salt, and milk together really well in a bowl 
-to make your batter. 
+# to make your batter. 
 
 # 2. Pour the batter into a jug, and let it sit for 30 minutes before you use it. 
 
 # 3. Turn your oven up to the highest setting and place the baking tray in the 
-oven to heat up for 5 minutes. 
+# oven to heat up for 5 minutes. 
 
 # 4. Place 1 table spoon of oil in each indentation, 
-and put the tray back into the oven and heat until oil is very hot.
+# and put the tray back into the oven and heat until oil is very hot.
  
 # 5. Open oven door, slide the tray out, and carefully pour the batter in. 
 
