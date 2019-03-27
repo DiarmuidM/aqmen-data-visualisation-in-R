@@ -231,6 +231,7 @@ library(viridis)
 library(viridisLite)
 library(devtools)
 library(socviz)
+library(readr)
 
 # NB!
 # Here is the most important point regarding installing and loading packages:
@@ -1195,35 +1196,36 @@ p <- ggplot(data = gapminder,
 # 2. Then we map variables in the data to a set of plot co-ordinates (i.e. x and y axes).
 
 # Next we specify what type of plot we would like to draw and add it to the base object we created ("p"):
-
+x11()
 p + geom_point() # geom_point() creates a scatterplot
 
 # QUESTION: how would you describe the association between GDP and life expectancy based on this graph?
 
 # Healy's (2019) summary of the graphing process in R:
 # 	1. Tell the ggplot() function what data we want to use.
-#	2. Tell ggplot() what relationships we want to see. For convenience we will put the results of the first two steps in an object called p (but this can be given an alternative name).
+#	  2. Tell ggplot() what relationships we want to see. For convenience we will put the results of the first two steps in an object called p (but this can be given an alternative name).
 # 	3. Tell ggplot how we want to see the relationships in our data (i.e. choose a geom).
-#	4. Layer on additional geoms as needed, by adding them to the p object one at a time.
-#	5. Use some additional functions to adjust scales, labels, tick marks, titles etc.
+#	  4. Layer on additional geoms as needed, by adding them to the p object one at a time.
+#	  5. Use some additional functions to adjust scales, labels, tick marks, titles etc.
 
 # Let's add an additional geom to our graph:
 
+x11()
 p + geom_point() + 
   geom_smooth() # 'smooth' the trend line 
 
 # A quick (and important) aside: note how the '+' symbol appears at the end of the line. This is crucial as placing it on the next line will result in the
 # command not executing. This is because R understands the end of a line (i.e. a carriage return) as being the end of the command.
 
+options(scipen = 999)
+x11()
 p + geom_point() + 
   geom_smooth() +
   scale_x_log10() # adjust the x axis by converting to log (base 10) values
 
 # QUESTION: what have we done by converting the x axis to a log scale?
 
-p + geom_point() + 
-  geom_smooth() +
-  scale_x_log10(labels = scales::dollar) # adjust the x axis labels by including dollar values instead of scientific notation
+
 # Note the use of 'scales::dollar' in the above code - this calls on the dollar() function from the scales library, without having to load the entire library.
 
 # We can manually adjust the aesthetic of the graph by including it as an argument of the geom() function i.e. it goes outside of aes().
@@ -1232,14 +1234,21 @@ p + geom_point() +
 #	- size = number in mm
 #	- shape = number between 0 and 24
 
+x11()
 p + geom_point(colour = "purple") + 
   geom_smooth() +
   scale_x_log10(labels = scales::dollar) # adjust the colour of the plotted points; note how it is included in the geom() funciton, NOT aes()
 
 # TASK: change the colour and size of the trend line in the above plot.
 
+x11()
+p + geom_point(colour = "purple") + 
+  geom_smooth(colour = "red", method = lm) +
+  scale_x_log10(labels = scales::dollar)
+
 # Finally, let's add some labels and descriptions of the plot's various components:
 
+x11()
 p + geom_point(alpha = 0.3) + 
   geom_smooth() +
   scale_x_log10(labels = scales::dollar) +
@@ -1250,8 +1259,15 @@ p + geom_point(alpha = 0.3) +
 
 # QUESTION: what effect does the 'alpha = 0.3' option have on the plot?
 
+
 # TASK: disaggregate the above plot by a third variable: 'continent' (hint: you need to edit the p object).
 
+x11()
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap,
+                          y = lifeExp, 
+                          colour = continent))
+p + geom_point()
 # ggplot() expects your data to be tidy:
 #	- every variable is a column
 #	- every observation is a row
@@ -1285,6 +1301,16 @@ ggsave("./figures/mylovelygraph.pdf", plot = p_out, height = 8, width = 12) # sa
 # 3. Adjust this plot so that both axes are log scaled (base 10).
 # 4. Add meaningful plot titles and labels.
 # 5. Summarise the association between these two variables. How much information can you glean from a simple graph like this?
+
+
+char_fin <- read_csv("./data_raw/extract_financial.csv")
+head(char_fin)
+
+# This is quite a large file that has proven problematic for producing graphs.
+# Caspar's clever solution is to create a smaller data set by randomly sampling the original data:
+
+char_fin_subset <- char_fin[sample(nrow(char_fin), 100000), ]
+nrow(char_fin_subset) # ta dah, a small random sample of the original data set
 
 
 ### END OF ACTIVITY THREE [ACT003] ###
@@ -1340,9 +1366,10 @@ ggsave("./figures/mylovelygraph.pdf", plot = p_out, height = 8, width = 12) # sa
 # REMINDER: this is a new R session and you need to reload (but not reinstall) the packages you need
 # for the upcoming activities. E.g. library(tidyverse)
 
-library(tidyverse)
-library(ggplot2)
+library(tidyverse) # data wrangling package
+library(ggplot2) # visualisation package
 library(lubridate) # package for working with dates
+library(readr) # package for reading in data
 
 
 # 4. Graphs in Action [ACT004] #
@@ -1366,6 +1393,7 @@ gapminder
 p <- ggplot(data = gapminder,
             mapping = aes(x = year,
                           y = lifeExp))
+x11()
 p + geom_line() 
 
 # QUESTION: what do you think has gone wrong here? HINT: take a look at the rows in the data.
@@ -1424,12 +1452,26 @@ p + geom_line(color="gray70", aes(group = country)) +
 # categorical variable. If you a more complex graph, like one based on a contingency table,
 # it is best to use the facet_grid() function.
 
+
 # Load in the General Social Survey (GSS) 2016 data
+
+# You might to install devtools and socviz packages:
+
+install.packages("devtools")
+library(devtools)
+install_github("kjhealy/socviz") # install socviz package from Github (an alternative to CRAN for storing packages)
 
 library(socviz) # load in socviz suite of data sets and other resources
 library(tidyverse) # load in tidyverse suite of packages
+library(readr)
 
-gss_sm
+# If you are struggling to install devtools and socviz, then you can also access the data set
+# from the data folder on this workshop's Github repository: 
+# https://github.com/DiarmuidM/aqmen-data-visualisation-in-R
+
+load("./data_raw/gss_sm.rda") # load in the gss_sm data set
+
+gss_sm # this is a data set that comes as part of the socviz package
 str(gss_sm)
 glimpse(gss_sm) # we have a good deal more categorical variables we can work with
 # See http://gss.norc.org/ for more information about the survey. It is roughly equivalent
@@ -1446,6 +1488,9 @@ p + geom_point(alpha = 0.2) +
 
 # QUESTION: what can you say about the relationship between age and offspring, and how it
 # is mediated by a respondent's sex and race?
+
+# QUESTION: is there a better way (i.e. different plot type) of visualising the
+# relationship between age and offspring?
 
 x11()
 p + geom_point(alpha = 0.2) +
