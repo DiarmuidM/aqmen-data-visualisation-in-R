@@ -10,3 +10,5 @@ SOFTWARE: Anaconda Navigator
 FOLDER: aqmen_training
 SUBFOLDER: data_viz_2019
 
+REPOSITORY: https://github.com/DiarmuidM
+

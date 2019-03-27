@@ -1,0 +1,14 @@
+## How to draw a random sample from a large data set ##
+
+# Creator: Diarmuid McDonnell
+# Date: 27/03/2019
+# Attribution: Caspar Kaiser
+
+char_fin <- read_csv("./data_raw/extract_financial.csv")
+head(char_fin)
+
+# This is quite a large file that has proven problematic for producing graphs.
+# Caspar's clever solution is to create a smaller data set by randomly sampling the original data:
+
+char_fin_subset <- char_fin[sample(nrow(char_fin), 100000), ] # draw a random sample of 100,000 observations
+nrow(char_fin_subset) # ta dah, a small random sample of the original data set
