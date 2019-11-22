@@ -1009,7 +1009,7 @@ View(char_reg[char_reg$income >=100000000 & !is.na(char_reg$income), ])
 
 # Dealing with duplicates
 
-distinct(char_reg) # drops duplicate rows from the data set
+sum(distinct(char_reg)) # drops duplicate rows from the data set
 
 char_reg %>%
   distinct(regno, .keep_all = TRUE) # drop rows where there are duplicates of charity number; what is this new symbol "%>%?"
@@ -1086,7 +1086,7 @@ mean(char_reg$income, na.rm = TRUE)
 char_reg$income[is.na(char_reg$income)] <- -9 # recode missing to -9
 View(char_reg$income[char_reg$income==-9])
 
-char_reg$income[char_reg$income==-9] <- -NA # recode -9 as missing
+char_reg$income[char_reg$income==-9] <- NA # recode -9 as missing
 
 # TASK: recode 0 as missing for income.
 
@@ -1267,7 +1267,13 @@ p <- ggplot(data = gapminder,
             mapping = aes(x = gdpPercap,
                           y = lifeExp, 
                           colour = continent))
-p + geom_point()
+p + geom_point() +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x = "GDP Per Capita", y = "Life Expectancy in Years",
+       title = "Economic Growth and Life Expectancy",
+       subtitle = "Data points are country-years",
+       caption = "Source: Gapminder.")
+
 # ggplot() expects your data to be tidy:
 #	- every variable is a column
 #	- every observation is a row
@@ -1404,6 +1410,7 @@ p + geom_line()
 p <- ggplot(data = gapminder,
             mapping = aes(x = year,
                           y = lifeExp))
+x11()
 p + geom_line(aes(group=country))
 
 # That looks more like it: one line per country. It's still pretty rough-looking but we'll learn how to spruce it up later.
@@ -1411,7 +1418,7 @@ p + geom_line(aes(group=country))
 # QUESTION: how would you interpret the trend in life expectency over time?
 
 
-# 4.2.1 Faceting
+# 4.1.2 Faceting
 
 # This is a very useful function for creating separate plots in a single visualisation.
 # We do this by including a third variable in the ggplot() command.
@@ -1430,10 +1437,11 @@ p + geom_line(aes(group=country)) +
 
 # TASK: describe the results of this graph.
 
+x11()
 p + geom_line(aes(group=country)) +
   facet_wrap(~ continent, ncol = 5)
 
-# QUESTION: what happens when we add the 'ncols' argument to the facet?
+# QUESTION: what happens when we add the 'ncol' argument to the facet?
 
 # Let's produce a cleaner graph:
 p <- ggplot(data = gapminder, mapping = aes(x = year, y = lifeExp))
@@ -1544,6 +1552,7 @@ p + geom_bar(mapping = aes(y = ..prop..))
 # QUESTION: why do you think each bar sums to 1?
 
 # Let's try fixing the summing issue:
+x11()
 p + geom_bar(mapping = aes(y = ..prop.., group = 1)) # that's better
 
 # Adding the 'group = 1' argument tells geom_bar() to treat the data set as a single group. That is, what proportion of
@@ -1683,8 +1692,8 @@ p + geom_hline(yintercept = median(char_fin$linc), size = 1, color = "red") +
   geom_vline(xintercept = median(char_fin$lexp), size = 1, color = "red") +
   geom_point() +
   geom_text_repel() + # this links with the label option in the base object
-  scale_x_continuous(labels = scales::dollar_format(prefix = "?")) +
-  scale_y_continuous(labels = scales::dollar_format(prefix = "?")) # add "?" signs to the axes labels
+  scale_x_continuous(labels = scales::dollar_format(prefix = "£")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "£")) # add "?" signs to the axes labels
                      
 # Add labels and other useful information                     
                      
@@ -1777,7 +1786,7 @@ gss_sm # U.S. General Social Survey
 str(gss_sm)
 glimpse(gss_sm)
 
-table(gss_sm$bigregion, gss_sm$religion) # crosstab of our two variables of interest
+reltab <- table(gss_sm$bigregion, gss_sm$religion) # crosstab of our two variables of interest
 
 # To build our summary table, we need to perform a sequence of tasks on our data set
 # using the pipe operator %>%.
@@ -1789,6 +1798,7 @@ rel_by_reg <- gss_sm %>%
   mutate(freq = N / sum(N), pct = round((freq*100), 0))
 
 View(rel_by_reg) # display the summary table we created
+View(reltab)
 
 # There's a lot going on in the above command, so let's take it piece-by-piece:
 #   1. we create a new object (rel_by_reg)
@@ -2276,7 +2286,7 @@ regout <- gapminder %>%
   nest() %>%
   mutate(model = map(data, fit_ols))
 
-# Let's take a moment to unpick the above command:
+# Let's take a moment to unpack the above command:
 # 1. We create an object to store the results of the piping command (regout)
 # 2. We group the gapminder data by continent and year
 # 3. We nest the rows underlying the group_by command 
